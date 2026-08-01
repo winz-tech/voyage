@@ -124,6 +124,7 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
 #info .st{display:inline-block;font-size:10px;letter-spacing:.16em;padding:1px 9px;border:1px solid;margin-bottom:5px}
 #info .st.done{color:var(--green);border-color:var(--green)}
 #info .st.doing{color:var(--red);border-color:var(--red)}
+#info .st.manual{color:#A8761E;border-color:#A8761E}
 #info .st.plan{color:#8A6A2E;border-color:#8A6A2E}
 #info .st.none{color:#8A8068;border-color:#8A8068}
 #info .nt{font-size:12px;color:var(--ink-l);line-height:1.7}
@@ -189,6 +190,7 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
 #lsgauge .tk i{flex:1;border-radius:1px}
 #lsgauge .tk i.done{height:100%;background:#2F7A33}
 #lsgauge .tk i.doing{height:100%;background:#B01E17}
+#lsgauge .tk i.manual{height:74%;background:#A8761E}
 #lsgauge .tk i.plan{height:58%;background:#A98A46}
 #lsgauge .tk i.none{height:26%;background:#B3A488}
 #lsgauge .sc{display:flex;justify-content:space-between;font-family:'CZ',serif;
@@ -202,12 +204,14 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
 .lslh .t{font-family:'WK',serif;font-size:18px;letter-spacing:.12em;color:#3B2710}
 .lslh .c{margin-left:auto;font-family:'CZ',serif;font-size:11px;color:#7A6440}
 .lslh .c b{color:#2F7A33;font-size:14px}
+.lsi.manual .dot{font-size:9px}
 .lsi{display:flex;gap:11px;padding:9px 2px;border-bottom:1px dotted rgba(122,100,64,.28);cursor:pointer}
 .lsi:hover{background:rgba(122,100,64,.08)}
 .lsi .dot{width:17px;height:17px;border-radius:50%;flex:none;margin-top:3px;
   display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff}
 .lsi.done .dot{background:#2F7A33}
 .lsi.doing .dot{background:#B01E17}
+.lsi.manual .dot{background:#A8761E}
 .lsi.plan .dot{background:none;border:1.5px dashed #A98A46}
 .lsi.none .dot{background:none;border:1.5px solid #B3A488}
 .lsi .no{font-family:'CZ',serif;font-size:11px;color:#8A6A3E;width:20px;flex:none;margin-top:4px}
@@ -228,6 +232,7 @@ body.film #fcap{display:flex}
 #fcap .st{font-family:'MING','WK',serif;font-size:min(1vw,1.9vh);padding:2px 11px;border:1px solid;flex:none}
 #fcap .st.done{color:#2F7A33;border-color:#2F7A33}
 #fcap .st.doing{color:#B01E17;border-color:#B01E17}
+#fcap .st.manual{color:#A8761E;border-color:#A8761E}
 #fcap .st.plan{color:#8A6A2E;border-color:#8A6A2E}
 #fcap .st.none{color:#8A8068;border-color:#8A8068}
 #bSkip{position:fixed;z-index:39;right:2.2vw;top:2.6vh;display:none;cursor:pointer;
@@ -235,7 +240,7 @@ body.film #fcap{display:flex}
   background:rgba(240,229,198,.9);color:#3A2408;border:1.4px solid #5C3F1C;padding:7px 15px;
   box-shadow:0 3px 10px rgba(0,0,0,.45)}
 body.film #bSkip{display:block}
-body.film #bar,body.film #bFilm,body.film #zc,body.film #mute,body.film #hint,body.film #info,body.film #rot{display:none!important}
+body.film #bar,body.film #zc,body.film #mute,body.film #hint,body.film #info,body.film #rot{display:none!important}
 #fstart{position:fixed;inset:0;z-index:95;display:none;flex-direction:column;
   align-items:center;justify-content:center;gap:26px;background:#0B0703;cursor:pointer}
 #fstart.on{display:flex}
@@ -265,7 +270,7 @@ body.film #bar,body.film #bFilm,body.film #zc,body.film #mute,body.film #hint,bo
       <p class="ln">一張訂單，從客戶第一次開口到錢真正入帳，<br>要靠岸四十五次。</p>
       <p class="ln">過去它們沒有被寫下來，<br>散在每個人的腦袋裡、紙本裡、口頭交代裡。</p>
       <p class="ln">二〇二六年六月，我們開始把它畫成一張圖。</p>
-      <p class="ln em">今天，我們已經登陸二十六座島。</p>
+      <p class="ln em">今天，我們已經登陸<span id="ltN">…</span>座島。</p>
       <button class="ln go" id="ltGo">展　開　航　海　圖</button>
     </div>
   </div>
@@ -285,10 +290,9 @@ body.film #bar,body.film #bFilm,body.film #zc,body.film #mute,body.film #hint,bo
     <div class="lv" id="zLv">100%</div>
   </div>
   <div id="bar">
-    <button class="bbtn" id="bFilm">▶ 播放航程影片</button>
+    <button class="bbtn" id="bRe">▶ 重播航程</button>
     <button class="bbtn" id="bLs">航程總覽</button>
-    <button class="bbtn" id="bUn">未探索的三座島</button>
-    <button class="bbtn" id="bRe">重看航程</button>
+    <button class="bbtn" id="bUn">下一段航程</button>
   </div>
 </div>
 
@@ -307,18 +311,29 @@ body.film #bar,body.film #bFilm,body.film #zc,body.film #mute,body.film #hint,bo
 
 <div id="veil"><div id="vbox">
   <div style="display:flex;align-items:center;gap:12px"><img class="phlogo" src="assets/logo.webp" alt="">
-  <h2>三座尚未探索的島</h2></div>
-  <div class="sub">13 段未探索航程，其實集中在三個地方。</div>
-  <div class="iz"><div class="t"><s>I</s>錢的另外一半</div><div class="d">
-    付錢那一側已經全線貫通——請購、議價、採購、進貨、請款、付款、費用分析。
-    但收錢那一側整條是空的：報價單、發票、應收帳款、收款沖帳。
-    這是最大的一塊，也是唯一直接影響現金流的一塊。</div></div>
-  <div class="iz"><div class="t"><s>II</s>品保的另外兩關</div><div class="d">
-    進料檢驗 IQC 已上線，但製程檢驗 IPQC 與成品檢驗 FQC 尚未系統化，
-    批號追溯的資料鏈已完整卻沒有查詢介面。客戶稽核時，這三項是必問。</div></div>
-  <div class="iz"><div class="t"><s>III</s>文件那一層</div><div class="d">
-    產品規格書、標籤稿、成分表、COA、MSDS 目前散落在個人手上，
-    沒有版本控管，也無法追溯客戶收到的是哪一版。</div></div>
+  <h2>下一段航程</h2></div>
+  <div class="sub" id="vSub"></div>
+
+  <div class="iz"><div class="t"><s>A</s>真正的空白（2 段）</div><div class="d">
+    <b>No.31　成品檢驗 FQC</b> —— 目前只有生產過程中的抽樣，成品出貨前沒有把關程序。
+    客戶稽核時這是必問項目，也是出貨文件包（COA）能不能自動生成的前提。<br><br>
+    <b>No.41　實際成本回算</b> —— 製令完工後沒有回頭比對真實料工與當初報價，
+    等於報價準不準永遠不知道。老闆已列為急件。</div></div>
+
+  <div class="iz"><div class="t"><s>B</s>錢的另一半（5 段・全靠人力）</div><div class="d">
+    報價單、發票、應收帳款、對帳催收、收款沖帳 —— 這些事公司一直在做，
+    但全部靠人工與 Excel。付錢那一側系統早已全線貫通，收錢這一側完全沒接上。
+    這是最直接影響現金流的一塊，也是投入報酬最高的一段。</div></div>
+
+  <div class="iz"><div class="t"><s>C</s>品保與文件（3 段・全靠人力）</div><div class="d">
+    製程檢驗 IPQC 有品管在做，但用紙本記錄，無法追溯與統計；
+    標籤稿、成分表、法規文件散在個人手上，沒有版本控管，
+    無法追溯客戶收到的是哪一版；出貨文件包目前人工彙整。</div></div>
+
+  <div class="iz"><div class="t"><s>D</s>接單前段與售後（4 段・全靠人力）</div><div class="d">
+    需求訪談、配方可行性評估、試產驗證、訂單審查、客訴退貨 ——
+    都有人在做、也做得通，只是憑經驗與口頭交代，沒有留下可查的紀錄。</div></div>
+
   <button class="x" onclick="document.getElementById('veil').classList.remove('show')">收起</button>
 </div></div>
 
@@ -342,44 +357,44 @@ const LOGO="assets/logo.webp";
 const LEGS=[
  {name:'接單前',latin:'LEG I',isles:[
   ['done','客戶開發與名單管理','客戶管理：跟進階段、興趣產品、配方偏好、客戶評分'],
-  ['none','需求訪談與產品 brief','劑型、容量、目標售價、銷售市場、月需求量'],
-  ['none','配方可行性評估',''],
+  ['manual','需求訪談與產品 brief','業務口頭確認需求，尚無標準表單'],
+  ['manual','配方可行性評估','研發判斷可否製作，未留紀錄'],
   ['doing','打樣申請與記錄','制度已定案，記錄表建置中'],
   ['done','打樣品號 X01–X04','配方／瓶器／成品／其他，四類分流'],
   ['done','打樣配方 X 版 BOM',''],
   ['doing','送樣・客戶回饋・改版','隨打樣記錄表一併完成'],
   ['done','成本試算','代工成本分析：固定費用分攤、設備折舊、間接人事'],
-  ['none','正式報價單','版本控管、有效期、MOQ、階梯價'],
+  ['manual','正式報價單','人工試算後報價，無版本控管與有效期'],
   ['done','客戶確認・品號轉正','換碼引擎＋轉正順序防呆']]},
  {name:'量產準備',latin:'LEG II',isles:[
   ['done','正式 BOM 建立','V1 已上線'],
   ['plan','替代料機制','V2 已完成評估，獨立立項'],
   ['done','包材瓶器・外箱配箱','外箱計算器'],
-  ['none','標籤稿・成分表・法規文件',''],
-  ['none','試產與放大驗證',''],
+  ['manual','標籤稿・成分表・法規文件','人工製作，散在個人手上，無版本控管'],
+  ['manual','試產與放大驗證','有試產，但無標準紀錄可回溯'],
   ['done','品號・單位換算・入數','品號中心系統']]},
  {name:'訂單到生產',latin:'LEG III',isles:[
   ['done','客戶正式訂單','出貨訂單管理'],
-  ['none','訂單審查','產能、交期、庫存、信用額度，目前憑經驗判斷'],
+  ['manual','訂單審查','產能、交期、庫存、信用額度，目前憑經驗判斷'],
   ['done','生產排程',''],['done','製令開立',''],
   ['done','需求展開 MRP','採購計算器：BOM 展開＋庫存比對'],
   ['done','請購→議價→採購→進貨','全鏈上線，含進度追蹤與進貨履歷'],
   ['done','IQC 進貨檢驗',''],['done','入庫',''],['done','領料・退料',''],
   ['done','生產執行與日報',''],
   ['plan','批次製造記錄 BMR','已規劃：併入現行製令系統，快照式不可竄改'],
-  ['none','製程檢驗 IPQC',''],['done','半成品入庫',''],['done','充填包裝',''],
-  ['none','成品檢驗 FQC',''],['done','成品入庫','']]},
+  ['manual','製程檢驗 IPQC','產線抽樣，品管以紙本記錄'],['done','半成品入庫',''],['done','充填包裝',''],
+  ['none','成品檢驗 FQC','目前只有生產中抽樣，出貨前無把關程序'],['done','成品入庫','']]},
  {name:'出貨到收款',latin:'LEG IV',isles:[
   ['done','揀貨與分批出貨',''],['done','標籤・棧板標示','標籤列印系統'],
   ['done','出貨單・送貨單',''],
   ['doing','批號追溯','資料鏈已完整，尚缺查詢介面'],
-  ['none','出貨文件包','COA、檢驗報告、MSDS'],['none','開立發票',''],
-  ['none','應收帳款・對帳・催收',''],['none','收款沖帳','']]},
+  ['manual','出貨文件包','COA、檢驗報告、MSDS，目前人工彙整'],['manual','開立發票','會計於加值中心後台人工開立'],
+  ['manual','應收帳款・對帳・催收','人工對帳，資料在 Excel'],['manual','收款沖帳','入帳後人工核銷，無系統沖帳']]},
  {name:'結算與回饋',latin:'LEG V',isles:[
-  ['none','實際成本回算','製令真實料工 vs 報價，代工成本模組的下一刀'],
+  ['none','實際成本回算','製令真實料工 vs 報價，老闆已列為急件'],
   ['done','月結','倉庫、出貨、品管、採購、生產、行銷、財會全棚'],
   ['done','損益與費用分析','月結儀表板＋會計科目費用分析'],
-  ['none','客訴與退貨 RMA',''],
+  ['manual','客訴與退貨 RMA','有人處理，但無系統記錄與追蹤'],
   ['plan','呆滯料處理','待替代料機制完成後解除']]}
 ];
 
@@ -395,10 +410,14 @@ const POS=[
 const LEGLAB=[[262,726,'接 單 前','LEG I'],[656,704,'量 產 準 備','LEG II'],
   [1218,150,'訂 單 到 生 產','LEG III'],[1176,676,'出 貨 到 收 款','LEG IV'],
   [886,872,'結 算 與 回 饋','LEG V']];
-const LABEL={done:'已登陸',doing:'靠岸中',plan:'已測繪',none:'未探索'};
+const LABEL={done:'已登陸',doing:'靠岸中',plan:'已測繪',manual:'人力航道',none:'未探索'};
 
 const FLAT=[];LEGS.forEach(l=>l.isles.forEach(i=>FLAT.push({st:i[0],nm:i[1],nt:i[2],leg:l.name})));
-const CNT={done:0,doing:0,plan:0,none:0};FLAT.forEach(f=>CNT[f.st]++);
+const CNT={done:0,doing:0,plan:0,manual:0,none:0};FLAT.forEach(f=>CNT[f.st]++);
+const CN='〇一二三四五六七八九';
+function cn(n){ if(n<10)return CN[n];
+ const t10=Math.floor(n/10),o=n%10;
+ return (t10>1?CN[t10]:'')+'十'+(o?CN[o]:''); }
 
 /* 浮雕文字：先印一層暖白墊底，再壓深色，模擬雕刻 */
 function etx(x,y,size,fill,ls,fam,txt,anchor,weight){
@@ -431,33 +450,37 @@ h+=`<g id="ttl" opacity="0">
 h+=`<g id="stat" opacity="0">
  ${etx(1493,722,11,'#6B4520',3,'cz','PROGRESS')}
  <text x="1493" y="784" text-anchor="middle" font-family="'CZ',serif" font-weight="700"
-   font-size="47" fill="#F2E4BC" fill-opacity=".5">26<tspan font-size="20"> / 45</tspan></text>
+   font-size="47" fill="#F2E4BC" fill-opacity=".5">${CNT.done}<tspan font-size="20"> / ${FLAT.length}</tspan></text>
  <text x="1493" y="782.6" text-anchor="middle" font-family="'CZ',serif" font-weight="700"
-   font-size="47" fill="#33210B">26<tspan font-size="20" fill="#6B4520"> / 45</tspan></text>
- ${etx(1493,816,16,'#33210B',7,'ming','已 登 陸')}
+   font-size="47" fill="#33210B">${CNT.done}<tspan font-size="20" fill="#6B4520"> / ${FLAT.length}</tspan></text>
+ ${etx(1493,816,16,'#33210B',5,'ming','系 統 覆 蓋')}
 </g>`;
 
 /* 圖例 */
-h+=`<g id="lgd" opacity="0" transform="translate(1388,318)">
- <rect x="0" y="0" width="258" height="150" rx="4" fill="#EADCB8" fill-opacity=".86"
+h+=`<g id="lgd" opacity="0" transform="translate(1388,296)">
+ <rect x="0" y="0" width="258" height="180" rx="4" fill="#EADCB8" fill-opacity=".88"
    stroke="#5C3F1C" stroke-width="1.6"/>
- <rect x="5" y="5" width="248" height="140" rx="3" fill="none" stroke="#7A6440" stroke-width=".8" opacity=".7"/>
- ${etx(129,26,10,'#6B4520',3.2,'cz','LEGEND')}
- <line x1="22" y1="34" x2="236" y2="34" stroke="#7A6440" stroke-width=".8" opacity=".5"/>
- <path d="M22 56 q4.5 3.5 7 8 q6 -14 17 -22" fill="none" stroke="#2F7A33" stroke-width="4.2"
+ <rect x="5" y="5" width="248" height="170" rx="3" fill="none" stroke="#7A6440" stroke-width=".8" opacity=".7"/>
+ ${etx(129,25,10,'#6B4520',3.2,'cz','LEGEND')}
+ <line x1="22" y1="33" x2="236" y2="33" stroke="#7A6440" stroke-width=".8" opacity=".5"/>
+ <path d="M20 54 q4.5 3.5 7 8 q6 -14 17 -22" fill="none" stroke="#2F7A33" stroke-width="4.2"
    stroke-linecap="round" filter="url(#brush)"/>
- ${etx(62,60,15,'#33210B',1,'ming','已登陸','start')}
- ${etx(236,60,15,'#33210B',0,'cz','26','end')}
- <line x1="26" y1="88" x2="26" y2="72" stroke="#5C3F1C" stroke-width="2.2" stroke-linecap="round"/>
- <path d="M27 72 l15 5 l-15 5 Z" fill="#B01E17"/>
- ${etx(62,88,15,'#33210B',1,'ming','靠岸中','start')}
- ${etx(236,88,15,'#33210B',0,'cz','3','end')}
- <circle cx="30" cy="110" r="8.5" fill="none" stroke="#8A6A2E" stroke-width="2" stroke-dasharray="4 3"/>
- ${etx(62,116,15,'#33210B',1,'ming','已測繪','start')}
- ${etx(236,116,15,'#33210B',0,'cz','3','end')}
- <circle cx="30" cy="138" r="8.5" fill="none" stroke="#8A8068" stroke-width="1.6"/>
- ${etx(62,144,15,'#33210B',1,'ming','未探索','start')}
- ${etx(236,144,15,'#33210B',0,'cz','13','end')}
+ ${etx(60,58,14.5,'#33210B',1,'ming','已登陸','start')}
+ ${etx(236,58,14.5,'#33210B',0,'cz',String(CNT.done),'end')}
+ <line x1="25" y1="86" x2="25" y2="70" stroke="#5C3F1C" stroke-width="2.2" stroke-linecap="round"/>
+ <path d="M26 70 l15 5 l-15 5 Z" fill="#B01E17"/>
+ ${etx(60,86,14.5,'#33210B',1,'ming','靠岸中','start')}
+ ${etx(236,86,14.5,'#33210B',0,'cz',String(CNT.doing),'end')}
+ <path d="M19 118 L33 100" stroke="#A8761E" stroke-width="4" stroke-linecap="round"/>
+ <ellipse cx="35" cy="97" rx="3.8" ry="5.6" fill="#A8761E" transform="rotate(37 35 97)"/>
+ ${etx(60,114,14.5,'#33210B',1,'ming','人力航道','start')}
+ ${etx(236,114,14.5,'#33210B',0,'cz',String(CNT.manual),'end')}
+ <circle cx="28" cy="136" r="8.5" fill="none" stroke="#8A6A2E" stroke-width="2" stroke-dasharray="4 3"/>
+ ${etx(60,142,14.5,'#33210B',1,'ming','已測繪','start')}
+ ${etx(236,142,14.5,'#33210B',0,'cz',String(CNT.plan),'end')}
+ <circle cx="28" cy="164" r="8.5" fill="none" stroke="#8A8068" stroke-width="1.6"/>
+ ${etx(60,170,14.5,'#33210B',1,'ming','未探索','start')}
+ ${etx(236,170,14.5,'#33210B',0,'cz',String(CNT.none),'end')}
 </g>`;
 
 /* 海域標籤 */
@@ -486,7 +509,7 @@ FLAT.forEach((it,i)=>{
  h+=`<g class="isle" data-i="${i}" style="cursor:pointer">
   <g filter="url(#sh)">
   <circle class="med" cx="${x}" cy="${y}" r="18" fill="#EADCB8" fill-opacity="${on?.92:.55}"
-    stroke="${it.st==='plan'?'#8A6A2E':it.st==='none'?'#8A8068':'#3B2710'}"
+    stroke="${it.st==='plan'?'#8A6A2E':it.st==='manual'?'#A8761E':it.st==='none'?'#8A8068':'#3B2710'}"
     stroke-width="${it.st==='none'?1.2:1.8}" ${it.st!=='done'&&it.st!=='doing'?'stroke-dasharray="4 3"':''}/>
   <text class="num" x="${x}" y="${y+4.8}" text-anchor="middle" font-family="'CZ',serif" font-weight="600"
     font-size="13.5" fill="${on?'#3B2710':'#8A8068'}">${n}</text></g>
@@ -527,6 +550,14 @@ FLAT.forEach((it,i)=>{ if(it.st!=='done')return; const [x,y]=POS[i];
  h+=`<path class="chk" data-i="${i}" d="M ${x+1} ${y+6} q 5 4 8 10 q 7 -19 22 -29"
   fill="none" stroke="#2F7A33" stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round"
   opacity=".95" filter="url(#brush)"/>`;});
+
+/* 人力航道：一支槳 */
+FLAT.forEach((it,i)=>{ if(it.st!=='manual')return; const [x,y]=POS[i];
+ h+=`<g class="chk oar" data-i="${i}" filter="url(#brush)">
+  <path d="M ${x+2} ${y+13} L ${x+17} ${y-7}" fill="none" stroke="#A8761E" stroke-width="4.6"
+    stroke-linecap="round"/>
+  <ellipse cx="${x+20}" cy="${y-11}" rx="4.4" ry="6.4" fill="#A8761E"
+    transform="rotate(37 ${x+20} ${y-11})"/></g>`;});
 
 /* 紅旗 */
 FLAT.forEach((it,i)=>{ if(it.st!=='doing')return; const [x,y]=POS[i];
@@ -680,8 +711,9 @@ function run(){
 
  /* 初始：全暗、線未畫、船在起點 */
  isles.forEach(g=>{g.style.transition='none';g.style.opacity='.13'});
- chks.forEach(p=>{const l=p.getTotalLength();p.style.transition='none';
-  p.style.strokeDasharray=l;p.style.strokeDashoffset=l});
+ chks.forEach(p=>{ p.style.transition='none';
+  if(p.tagName.toLowerCase()==='g'){ p.style.opacity='0'; }
+  else { const l=p.getTotalLength(); p.style.strokeDasharray=l; p.style.strokeDashoffset=l; }});
  flags.forEach(f=>f.setAttribute('opacity','0'));
  labs.forEach(g=>{g.style.transition='none';g.setAttribute('opacity','0')});
  rt.style.transition='none';rt.style.strokeDasharray=L;rt.style.strokeDashoffset=L;
@@ -717,8 +749,12 @@ function run(){
   g.style.transition='opacity .45s';
   g.style.opacity = it.st==='none' ? '.72' : '1';
   const ck=document.querySelector('.chk[data-i="'+i+'"]');
-  if(ck){ ck.style.transition='stroke-dashoffset .34s cubic-bezier(.3,.9,.4,1)';
-          ck.style.strokeDashoffset=0; sBrush(); }
+  if(ck){
+   if(ck.tagName.toLowerCase()==='g'){ ck.style.transition='opacity .4s'; ck.style.opacity='1'; }
+   else { ck.style.transition='stroke-dashoffset .34s cubic-bezier(.3,.9,.4,1)';
+          ck.style.strokeDashoffset=0; }
+   sBrush();
+  }
   const fg=document.querySelector('.flag[data-i="'+i+'"]');
   if(fg){ fg.style.transition='opacity .5s'; fg.setAttribute('opacity','1'); }
   if(!ck&&!fg) sTick();
@@ -882,7 +918,9 @@ addEventListener('resize',()=>{apply(false);
  }});
 apply(false);
 
-/* ══ 導演模式（?film=1）══ */
+(function(){const e=document.getElementById('ltN'); if(e) e.textContent=cn(CNT.done);})();
+
+/* ══ 導演模式 ══ */
 const FILM = !new URLSearchParams(location.search).has('nofilm');
 /* 把地圖座標 (mx,my) 擺到畫面中央，縮放 s；lerp<1 為平滑跟隨 */
 function camAt(mx,my,s,lerp){
@@ -944,7 +982,7 @@ svg.addEventListener('click',e=>{
         '<span class="c"><b>'+done+'</b> / '+leg.isles.length+'</span></div>';
   leg.isles.forEach(is=>{
    n++;
-   const mk = is[0]==='done'?'✓':is[0]==='doing'?'⚑':'';
+   const mk = is[0]==='done'?'✓':is[0]==='doing'?'⚑':is[0]==='manual'?'✋':'';
    html+='<div class="lsi '+is[0]+'" data-i="'+(n-1)+'">'+
      '<span class="no">'+String(n).padStart(2,'0')+'</span>'+
      '<span class="dot">'+mk+'</span><div><div class="nm">'+is[1]+'</div>'+
@@ -986,17 +1024,27 @@ function flyTo(i){
 }
 
 document.getElementById('bSkip').onclick=()=>{ sClick(.5); run._skip=true; };
-document.getElementById('bFilm').onclick=()=>{sClick(.5);
- setTimeout(()=>{location.href=location.pathname;},180);};
 document.getElementById('bLs').onclick=()=>{sClick(.5);document.getElementById('lsv').classList.add('show')};
 document.getElementById('lsv').onclick=e=>{if(e.target.id==='lsv')e.currentTarget.classList.remove('show')};
+
+(function(){const e=document.getElementById('vSub');
+ if(e) e.textContent=`全程 ${FLAT.length} 段：系統已接手 ${CNT.done} 段，施工中 ${CNT.doing} 段，`+
+  `規劃完成 ${CNT.plan} 段，仍靠人力 ${CNT.manual} 段，真正空白 ${CNT.none} 段。`;})();
 
 document.getElementById('bUn').onclick=()=>{sClick(.5);document.getElementById('veil').classList.add('show')};
 document.getElementById('veil').onclick=e=>{if(e.target.id==='veil')e.currentTarget.classList.remove('show')};
 document.getElementById('bRe').onclick=()=>{
- sClick(.5); info.classList.remove('show');
+ sClick(.5);
+ info.classList.remove('show');
  document.querySelectorAll('.isle.sel').forEach(o=>o.classList.remove('sel'));
- S=1;TX=0;TY=0;apply(true); run();
+ document.getElementById('lsv').classList.remove('show');
+ document.getElementById('veil').classList.remove('show');
+ if(FILM){                                   // 導演模式：收起 UI，重演一次
+  document.body.classList.add('film');
+  ['bar','zc','mute'].forEach(id=>document.getElementById(id).classList.remove('on'));
+ }
+ S=1;TX=0;TY=0;apply(true);
+ setTimeout(run,140);
 };
 
 addEventListener('keydown',e=>{ if(e.key==='Escape'){

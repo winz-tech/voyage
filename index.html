@@ -214,6 +214,27 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
 .lsi .nm{font-family:'WK',serif;font-size:15.5px;color:#3B2710}
 .lsi.none .nm{color:#8A8068}
 .lsi .nt{font-size:12px;color:#7A6440;line-height:1.65;margin-top:2px}
+#fcap{position:fixed;z-index:39;left:50%;bottom:5.5%;transform:translateX(-50%) translateY(10px);
+  display:none;align-items:center;gap:14px;padding:11px 22px;max-width:86vw;
+  background:linear-gradient(180deg,rgba(242,232,202,.96),rgba(224,209,170,.94));
+  border:1.5px solid #5C3F1C;box-shadow:0 6px 22px rgba(0,0,0,.55),
+  inset 0 0 0 3px rgba(242,232,202,.9),inset 0 0 0 4.5px rgba(122,100,64,.5);
+  opacity:0;transition:opacity .45s ease,transform .45s ease}
+body.film #fcap{display:flex}
+#fcap.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#fcap .no{font-family:'CZ',serif;font-size:min(1.1vw,2vh);color:#6B4520;letter-spacing:.16em;flex:none}
+#fcap .nm{font-family:'MING','WK',serif;font-weight:700;font-size:min(1.55vw,2.9vh);
+  color:#2B1B06;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#fcap .st{font-family:'MING','WK',serif;font-size:min(1vw,1.9vh);padding:2px 11px;border:1px solid;flex:none}
+#fcap .st.done{color:#2F7A33;border-color:#2F7A33}
+#fcap .st.doing{color:#B01E17;border-color:#B01E17}
+#fcap .st.plan{color:#8A6A2E;border-color:#8A6A2E}
+#fcap .st.none{color:#8A8068;border-color:#8A8068}
+#bSkip{position:fixed;z-index:39;right:2.2vw;top:2.6vh;display:none;cursor:pointer;
+  font-family:'MING','WK',serif;font-size:12.5px;letter-spacing:.18em;
+  background:rgba(240,229,198,.9);color:#3A2408;border:1.4px solid #5C3F1C;padding:7px 15px;
+  box-shadow:0 3px 10px rgba(0,0,0,.45)}
+body.film #bSkip{display:block}
 body.film #bar,body.film #bFilm,body.film #zc,body.film #mute,body.film #hint,body.film #info,body.film #rot{display:none!important}
 #fstart{position:fixed;inset:0;z-index:95;display:none;flex-direction:column;
   align-items:center;justify-content:center;gap:26px;background:#0B0703;cursor:pointer}
@@ -222,13 +243,6 @@ body.film #bar,body.film #bFilm,body.film #zc,body.film #mute,body.film #hint,bo
 #fstart .t{font-family:'WK',serif;font-size:min(1.6vw,3vh);letter-spacing:.5em;
   color:#E3CE9C;opacity:.8;animation:fbr 2.4s ease-in-out infinite}
 @keyframes fbr{0%,100%{opacity:.45}50%{opacity:.95}}
-#fend{position:fixed;inset:0;z-index:96;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:22px;background:#0B0703;
-  opacity:0;pointer-events:none;transition:opacity 1.6s ease}
-#fend.on{opacity:1}
-#fend img{width:min(22vw,220px)}
-#fend .t{font-family:'WK',serif;font-size:min(1.5vw,2.8vh);letter-spacing:.44em;color:#E3CE9C}
-#fend .s{font-family:'CZ',serif;font-size:min(1vw,1.9vh);letter-spacing:.34em;color:#8A7048}
 #rot{position:fixed;inset:0;z-index:90;display:none;flex-direction:column;align-items:center;
   justify-content:center;gap:16px;background:#0E0904;color:#E3CE9C;text-align:center;padding:24px}
 #rot.show{display:flex}
@@ -308,9 +322,10 @@ body.film #bar,body.film #bFilm,body.film #zc,body.film #mute,body.film #hint,bo
   <button class="x" onclick="document.getElementById('veil').classList.remove('show')">收起</button>
 </div></div>
 
-<div id="fend"><img src="assets/logo.webp" alt="">
-  <div class="t">穎 利 科 技　航 海 圖</div>
-  <div class="s">26 / 45 &nbsp;·&nbsp; MMXXVI</div></div>
+</div>
+
+<div id="fcap"><span class="no" id="fcapNo"></span><span class="nm" id="fcapNm"></span><span class="st" id="fcapSt"></span></div>
+<button id="bSkip">跳過 ▸</button>
 
 <div id="rot">
   <svg viewBox="0 0 24 24" fill="none" stroke="#E3CE9C" stroke-width="1.4">
@@ -684,14 +699,21 @@ function run(){
  const CAM=2.15, PRE=FILM?2800:0;
  /* 一站一停：每座島 = 航行 TRAVEL 毫秒 → 停靠 HOLD 毫秒（停的時候打勾／升旗）*/
  const SPD = parseFloat(new URLSearchParams(location.search).get('speed')) || 1;
- const TRAVEL = (FILM?340:110)*SPD, HOLD = (FILM?680:90)*SPD;
+ const TRAVEL = (FILM?420:110)*SPD, HOLD = (FILM?1050:90)*SPD;
  const STEP = TRAVEL+HOLD, DUR = POS.length*STEP;
  const t0 = performance.now()+PRE;
  if(FILM){ S=1;TX=0;TY=0;apply(false); }
- let nextI=0, nextLeg=0;
+ let nextI=0, nextLeg=0; run._skip=false;
 
+ const cap=document.getElementById('fcap');
  function landfall(i){
   const g=isles[i], it=FLAT[i];
+  if(FILM){
+   document.getElementById('fcapNo').textContent='No.'+String(i+1).padStart(2,'0');
+   document.getElementById('fcapNm').textContent=it.nm;
+   const s=document.getElementById('fcapSt'); s.className='st '+it.st; s.textContent=LABEL[it.st];
+   cap.classList.add('on');
+  }
   g.style.transition='opacity .45s';
   g.style.opacity = it.st==='none' ? '.72' : '1';
   const ck=document.querySelector('.chk[data-i="'+i+'"]');
@@ -708,6 +730,9 @@ function run(){
    camAt(POS[0][0],POS[0][1],1+(CAM-1)*ee,1);
    requestAnimationFrame(tick); return;
   }
+  if(run._skip){ while(nextI<AT.length) landfall(nextI++);
+   labs.forEach(g=>g.setAttribute('opacity','1'));
+   rt.style.strokeDashoffset=0; finish(true); return; }
   const el = Math.max(0, now-t0);                        // rAF 時間戳可能早於 t0，要夾住
   const idx = Math.max(0, Math.min(POS.length-1, Math.floor(el/STEP)));
   const seg = Math.max(0, el - idx*STEP);
@@ -735,11 +760,12 @@ function run(){
  }
  requestAnimationFrame(tick);
 
- function finish(){
+ function finish(skipped){
   rt.style.transition='none';rt.style.strokeDasharray='10 9';rt.style.strokeDashoffset=0;
   const me=document.getElementById('mkEnd');
   me.style.transition='opacity .8s';me.setAttribute('opacity','1');
   sailer.style.transition='opacity .8s';sailer.setAttribute('opacity','0');
+  if(cap) cap.classList.remove('on');
   setTimeout(()=>{
    const s=document.getElementById('ship');
    s.style.transition='none';
@@ -749,25 +775,37 @@ function run(){
    s.setAttribute('opacity','1');
    s.setAttribute('transform',`translate(${POS[3][0]-46},${POS[3][1]-66})`);
   },500);
-  if(FILM){
-   setTimeout(()=>camMove(836,470,1,2600,()=>{        // 拉遠回全圖
-    setTimeout(()=>camMove(1505,716,2.5,2600,()=>{    // 推向「26 / 45」
-     setTimeout(()=>{ document.getElementById('fend').classList.add('on');
-      bgmTo(0,3000); },2200);
-    }),1600);
-   }),900);
-  }
-  setTimeout(()=>{
-   fade(document.getElementById('stat'));
-   setTimeout(()=>fade(document.getElementById('lgd')),200);
+
+  /* 交還操控權：關掉影片外衣、亮出所有按鈕 */
+  function handOver(){
+   document.body.classList.remove('film');
    document.getElementById('bar').classList.add('on');
    document.getElementById('mute').classList.add('on');
    document.getElementById('zc').classList.add('on');
    const hp=document.getElementById('hint');
    hp.classList.add('on'); setTimeout(()=>hp.classList.remove('on'),4600);
    sDone(); played=true;
-  },1100);
+  }
+
+  setTimeout(()=>{
+   fade(document.getElementById('stat'));
+   setTimeout(()=>fade(document.getElementById('lgd')),200);
+  },900);
+
+  if(FILM && !skipped){
+   setTimeout(()=>camMove(836,470,1,2600,()=>{             // ① 拉遠回全圖
+    setTimeout(()=>camMove(1505,716,2.5,2600,()=>{         // ② 推向「26 / 45」
+     setTimeout(()=>camMove(836,470,1,2400,()=>{           // ③ 再拉回主畫面
+      handOver();                                          // ④ 交還操控
+     }),2400);
+    }),1600);
+   }),900);
+  } else {
+   S=1;TX=0;TY=0;apply(true);
+   setTimeout(handOver,600);
+  }
  }
+
 }
 document.getElementById('seal').onclick=reveal;
 
@@ -845,7 +883,7 @@ addEventListener('resize',()=>{apply(false);
 apply(false);
 
 /* ══ 導演模式（?film=1）══ */
-const FILM = new URLSearchParams(location.search).has('film');
+const FILM = !new URLSearchParams(location.search).has('nofilm');
 /* 把地圖座標 (mx,my) 擺到畫面中央，縮放 s；lerp<1 為平滑跟隨 */
 function camAt(mx,my,s,lerp){
  const b=box(), vb=svg.viewBox.baseVal;
@@ -947,8 +985,9 @@ function flyTo(i){
  [...pg.children].forEach(a=>a.beginElement&&a.beginElement());
 }
 
+document.getElementById('bSkip').onclick=()=>{ sClick(.5); run._skip=true; };
 document.getElementById('bFilm').onclick=()=>{sClick(.5);
- setTimeout(()=>{location.href=location.pathname+'?film=1';},180);};
+ setTimeout(()=>{location.href=location.pathname;},180);};
 document.getElementById('bLs').onclick=()=>{sClick(.5);document.getElementById('lsv').classList.add('show')};
 document.getElementById('lsv').onclick=e=>{if(e.target.id==='lsv')e.currentTarget.classList.remove('show')};
 

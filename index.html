@@ -208,6 +208,21 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
 .lsi .nm{font-family:'WK',serif;font-size:15.5px;color:#3B2710}
 .lsi.none .nm{color:#8A8068}
 .lsi .nt{font-size:12px;color:#7A6440;line-height:1.65;margin-top:2px}
+body.film #bar,body.film #zc,body.film #mute,body.film #hint,body.film #info,body.film #rot{display:none!important}
+#fstart{position:fixed;inset:0;z-index:95;display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:26px;background:#0B0703;cursor:pointer}
+#fstart.on{display:flex}
+#fstart img{width:min(26vw,260px);filter:drop-shadow(0 8px 30px rgba(0,0,0,.9))}
+#fstart .t{font-family:'WK',serif;font-size:min(1.6vw,3vh);letter-spacing:.5em;
+  color:#E3CE9C;opacity:.8;animation:fbr 2.4s ease-in-out infinite}
+@keyframes fbr{0%,100%{opacity:.45}50%{opacity:.95}}
+#fend{position:fixed;inset:0;z-index:96;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:22px;background:#0B0703;
+  opacity:0;pointer-events:none;transition:opacity 1.6s ease}
+#fend.on{opacity:1}
+#fend img{width:min(22vw,220px)}
+#fend .t{font-family:'WK',serif;font-size:min(1.5vw,2.8vh);letter-spacing:.44em;color:#E3CE9C}
+#fend .s{font-family:'CZ',serif;font-size:min(1vw,1.9vh);letter-spacing:.34em;color:#8A7048}
 #rot{position:fixed;inset:0;z-index:90;display:none;flex-direction:column;align-items:center;
   justify-content:center;gap:16px;background:#0E0904;color:#E3CE9C;text-align:center;padding:24px}
 #rot.show{display:flex}
@@ -285,6 +300,11 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
     沒有版本控管，也無法追溯客戶收到的是哪一版。</div></div>
   <button class="x" onclick="document.getElementById('veil').classList.remove('show')">收起</button>
 </div></div>
+
+<div id="fstart"><img src="assets/logo.webp" alt=""><div class="t">輕　觸　開　始</div></div>
+<div id="fend"><img src="assets/logo.webp" alt="">
+  <div class="t">穎 利 科 技　航 海 圖</div>
+  <div class="s">26 / 45 &nbsp;·&nbsp; MMXXVI</div></div>
 
 <div id="rot">
   <svg viewBox="0 0 24 24" fill="none" stroke="#E3CE9C" stroke-width="1.4">
@@ -579,13 +599,15 @@ function reveal(){
  setTimeout(()=>{                       // 信箋浮現，一段一段寫上去
   document.getElementById('letter').classList.add('on');
   const ls=[...document.querySelectorAll('#ltbox .ln')];
+  const GAP = FILM ? 900 : 1500;
   ls.forEach((p,i)=>setTimeout(()=>{ p.classList.add('in'); if(i<ls.length-1) sTick(); },
-    i===ls.length-1 ? 1300+i*1500 : i*1500));
+    i===ls.length-1 ? (FILM?600:1300)+i*GAP : i*GAP));
+  if(FILM) setTimeout(openChart, (ls.length-1)*GAP + 2400);
  },1500);
  document.getElementById('ltGo').onclick=openChart;
  document.getElementById('letter').onclick=e=>{
   if(document.getElementById('letter').classList.contains('on')) openChart(); };
- setTimeout(()=>{ if(!openChart._d) openChart(); }, 26000);   // 26 秒沒動作自動展開
+ if(!FILM) setTimeout(()=>{ if(!openChart._d) openChart(); }, 26000);
 }
 function openChart(){
  if(openChart._d) return; openChart._d=true;
@@ -639,15 +661,23 @@ function run(){
  ms.style.transition='opacity .8s';ms.setAttribute('opacity','1');
  sailer.style.transition='opacity .5s';sailer.setAttribute('opacity','1');
 
- const D=8200, t0=performance.now();
+ const CAM=2.15, PRE=FILM?2800:0;
+ const D=FILM?10500:8200, t0=performance.now()+PRE;
+ if(FILM){ S=1;TX=0;TY=0;apply(false); }
  let nextI=0,nextLeg=0;
  function tick(now){
+  if(now<t0){                                   // 前導：從全圖緩緩推近起點
+   const k=1-(t0-now)/PRE, e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+   camAt(POS[0][0],POS[0][1],1+(CAM-1)*e,1);
+   return requestAnimationFrame(tick);
+  }
   let u=Math.min(1,(now-t0)/D);
   const e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;      // 緩起緩停
   rt.style.strokeDashoffset=L*(1-e);
   const p=rt.getPointAtLength(L*e), q=rt.getPointAtLength(Math.min(L,L*e+6));
   const a=Math.atan2(q.y-p.y,q.x-p.x)*180/Math.PI;
   sailer.setAttribute('transform',`translate(${p.x},${p.y}) rotate(${a*.35})`);
+  if(FILM) camAt(p.x,p.y,CAM,.085);            // 跟拍，帶阻尼
 
   while(nextLeg<LEGAT.length && e>=LEGAT[nextLeg]-.005){
    const g=labs[nextLeg];if(g){g.style.transition='opacity .7s';g.setAttribute('opacity','1')}
@@ -683,6 +713,14 @@ function run(){
    s.setAttribute('opacity','1');
    s.setAttribute('transform',`translate(${POS[3][0]-46},${POS[3][1]-66})`);
   },500);
+  if(FILM){
+   setTimeout(()=>camMove(836,470,1,2600,()=>{        // 拉遠回全圖
+    setTimeout(()=>camMove(1505,716,2.5,2600,()=>{    // 推向「26 / 45」
+     setTimeout(()=>{ document.getElementById('fend').classList.add('on');
+      bgmTo(0,3000); },2200);
+    }),1600);
+   }),900);
+  }
   setTimeout(()=>{
    fade(document.getElementById('stat'));
    setTimeout(()=>fade(document.getElementById('lgd')),200);
@@ -761,6 +799,39 @@ document.getElementById('zOut').onclick=()=>{sClick(.3);const b=box();zoomAt(S/1
 document.getElementById('zRe').onclick=()=>{sClick(.3);S=1;TX=0;TY=0;apply(true)};
 addEventListener('resize',()=>apply(false));
 apply(false);
+
+/* ══ 導演模式（?film=1）══ */
+const FILM = new URLSearchParams(location.search).has('film');
+/* 把地圖座標 (mx,my) 擺到畫面中央，縮放 s；lerp<1 為平滑跟隨 */
+function camAt(mx,my,s,lerp){
+ const b=box(), vb=svg.viewBox.baseVal;
+ const sc=Math.min(b.width/vb.width,b.height/vb.height);
+ const ox=(b.width-vb.width*sc)/2, oy=(b.height-vb.height*sc)/2;
+ const tS=s, tx=b.width/2-(ox+mx*sc)*tS, ty=b.height/2-(oy+my*sc)*tS;
+ const k=(lerp===undefined?1:lerp);
+ S+=(tS-S)*k; TX+=(tx-TX)*k; TY+=(ty-TY)*k;
+ apply(false);
+}
+/* 一段時間內把鏡頭移到某處 */
+function camMove(mx,my,s,ms,done){
+ const b=box(), s0=S, x0=TX, y0=TY, t0=performance.now();
+ const vb=svg.viewBox.baseVal, sc=Math.min(b.width/vb.width,b.height/vb.height);
+ const ox=(b.width-vb.width*sc)/2, oy=(b.height-vb.height*sc)/2;
+ const x1=b.width/2-(ox+mx*sc)*s, y1=b.height/2-(oy+my*sc)*s;
+ (function f(now){
+  let u=Math.min(1,(now-t0)/ms);
+  const e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
+  S=s0+(s-s0)*e; TX=x0+(x1-x0)*e; TY=y0+(y1-y0)*e; apply(false);
+  if(u<1) requestAnimationFrame(f); else if(done) done();
+ })(t0);
+}
+if(FILM){
+ document.body.classList.add('film');
+ document.getElementById('fstart').classList.add('on');
+ document.getElementById('fstart').onclick=function(){
+  this.classList.remove('on'); reveal();
+ };
+}
 
 /* 點島 */
 const iNo=document.getElementById('iNo'),iNm=document.getElementById('iNm'),

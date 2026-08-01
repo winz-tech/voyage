@@ -9,9 +9,11 @@
 <link rel="preload" as="image" href="assets/scroll-closed.jpg">
 <link rel="preload" as="image" href="assets/seal.webp">
 <link rel="preload" as="image" href="assets/map.jpg">
+<link rel="preload" as="font" type="font/woff2" href="assets/ming.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="assets/wenkai.woff2" crossorigin>
 <style>
 @font-face{font-family:'WK';src:url("assets/wenkai.woff2") format('woff2');font-weight:400;font-display:block}
+@font-face{font-family:'MING';src:url("assets/ming.woff2") format('woff2');font-weight:700;font-display:block}
 @font-face{font-family:'CZ';src:url("assets/cinzel.woff2") format('woff2');font-weight:600;font-display:block}
 :root{
   --ink:#3F2E19; --ink-l:#7A6440; --green:#2F7A33; --red:#B01E17;
@@ -383,6 +385,14 @@ const LABEL={done:'已登陸',doing:'靠岸中',plan:'已測繪',none:'未探索
 const FLAT=[];LEGS.forEach(l=>l.isles.forEach(i=>FLAT.push({st:i[0],nm:i[1],nt:i[2],leg:l.name})));
 const CNT={done:0,doing:0,plan:0,none:0};FLAT.forEach(f=>CNT[f.st]++);
 
+/* 浮雕文字：先印一層暖白墊底，再壓深色，模擬雕刻 */
+function etx(x,y,size,fill,ls,fam,txt,anchor,weight){
+ const f = fam==='ming' ? "'MING','WK',serif" : fam==='cz' ? "'CZ',serif" : "'WK',serif";
+ const a = anchor||'middle', w = weight||700;
+ const common = `text-anchor="${a}" font-family="${f}" font-weight="${w}" font-size="${size}" letter-spacing="${ls}"`;
+ return `<text x="${x}" y="${y+1.3}" ${common} fill="#F2E4BC" fill-opacity=".55">${txt}</text>`+
+        `<text x="${x}" y="${y}" ${common} fill="${fill}">${txt}</text>`;
+}
 let h=`<defs>
  <filter id="brush" x="-40%" y="-40%" width="180%" height="180%">
   <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="5" result="n"/>
@@ -398,47 +408,51 @@ h+=`<g id="crest" opacity="0">
 </g>`;
 
 h+=`<g id="ttl" opacity="0">
- <text x="236" y="102" text-anchor="middle" font-family="'WK',serif"
-   font-size="21" fill="#3B2710" letter-spacing="4">穎利科技</text>
- <text x="236" y="130" text-anchor="middle" font-family="'WK',serif"
-   font-size="21" fill="#3B2710" letter-spacing="8">航 海 圖</text></g>`;
+ ${etx(207,104,18,'#33210B',2,'ming','穎利科技　航海圖')}
+ ${etx(207,128,9,'#6B4520',1.4,'cz','CHART OF THE WINZ VOYAGE')}
+</g>`;
 
-/* 統計（右下卡圖許內：x1409-1602 y614-806）*/
+/* 統計（右下卡圖許開口：x1392-1595 y695-833，中心 1493,764）*/
 h+=`<g id="stat" opacity="0">
- <text x="1505" y="662" text-anchor="middle" font-family="'CZ',serif" font-size="11.5"
-   fill="#6B4520" letter-spacing="3">PROGRESS</text>
- <text x="1505" y="718" text-anchor="middle" font-family="'CZ',serif" font-weight="700"
-   font-size="50" fill="#3B2710">26<tspan font-size="21" fill="#7A5F33"> / 45</tspan></text>
- <text x="1505" y="750" text-anchor="middle" font-family="'WK',serif"
-   font-size="17" fill="#3B2710" letter-spacing="7">已 登 陸</text>
- <line x1="1430" y1="765" x2="1580" y2="765" stroke="#8A6A3E" stroke-width=".9" opacity=".55"/>
- <text x="1505" y="787" text-anchor="middle" font-family="'WK',serif"
-   font-size="12" fill="#7A5F33" letter-spacing="1">靠岸中 3　已測繪 3　未探索 13</text></g>`;
+ ${etx(1493,722,11,'#6B4520',3,'cz','PROGRESS')}
+ <text x="1493" y="784" text-anchor="middle" font-family="'CZ',serif" font-weight="700"
+   font-size="47" fill="#F2E4BC" fill-opacity=".5">26<tspan font-size="20"> / 45</tspan></text>
+ <text x="1493" y="782.6" text-anchor="middle" font-family="'CZ',serif" font-weight="700"
+   font-size="47" fill="#33210B">26<tspan font-size="20" fill="#6B4520"> / 45</tspan></text>
+ ${etx(1493,816,16,'#33210B',7,'ming','已 登 陸')}
+</g>`;
 
 /* 圖例 */
-h+=`<g id="lgd" opacity="0" transform="translate(1392,330)">
- <rect x="0" y="0" width="252" height="126" rx="4" fill="#EADCB8" fill-opacity=".82"
-   stroke="#7A6440" stroke-width="1.3"/>
- <rect x="4" y="4" width="244" height="118" rx="3" fill="none" stroke="#7A6440" stroke-width=".7" opacity=".6"/>
- <path d="M18 28 q4 3 6 7 q5 -12 15 -19" fill="none" stroke="#2F7A33" stroke-width="3.6"
+h+=`<g id="lgd" opacity="0" transform="translate(1388,318)">
+ <rect x="0" y="0" width="258" height="150" rx="4" fill="#EADCB8" fill-opacity=".86"
+   stroke="#5C3F1C" stroke-width="1.6"/>
+ <rect x="5" y="5" width="248" height="140" rx="3" fill="none" stroke="#7A6440" stroke-width=".8" opacity=".7"/>
+ ${etx(129,26,10,'#6B4520',3.2,'cz','LEGEND')}
+ <line x1="22" y1="34" x2="236" y2="34" stroke="#7A6440" stroke-width=".8" opacity=".5"/>
+ <path d="M22 56 q4.5 3.5 7 8 q6 -14 17 -22" fill="none" stroke="#2F7A33" stroke-width="4.2"
    stroke-linecap="round" filter="url(#brush)"/>
- <text x="52" y="34" font-family="'WK',serif" font-size="15.5" fill="#3B2710">已登陸　26</text>
- <path d="M22 50 l0 -14 M23 36 l13 4 l-13 4 Z" fill="#B01E17" stroke="#B01E17" stroke-width="2" stroke-linejoin="round"/>
- <text x="52" y="62" font-family="'WK',serif" font-size="15.5" fill="#3B2710">靠岸中　3</text>
- <circle cx="27" cy="80" r="8" fill="none" stroke="#8A6A2E" stroke-width="1.8" stroke-dasharray="4 3"/>
- <text x="52" y="86" font-family="'WK',serif" font-size="15.5" fill="#3B2710">已測繪　3</text>
- <circle cx="27" cy="104" r="8" fill="none" stroke="#8A8068" stroke-width="1.4" opacity=".8"/>
- <text x="52" y="110" font-family="'WK',serif" font-size="15.5" fill="#3B2710">未探索　13</text></g>`;
+ ${etx(62,60,15,'#33210B',1,'ming','已登陸','start')}
+ ${etx(236,60,15,'#33210B',0,'cz','26','end')}
+ <line x1="26" y1="88" x2="26" y2="72" stroke="#5C3F1C" stroke-width="2.2" stroke-linecap="round"/>
+ <path d="M27 72 l15 5 l-15 5 Z" fill="#B01E17"/>
+ ${etx(62,88,15,'#33210B',1,'ming','靠岸中','start')}
+ ${etx(236,88,15,'#33210B',0,'cz','3','end')}
+ <circle cx="30" cy="110" r="8.5" fill="none" stroke="#8A6A2E" stroke-width="2" stroke-dasharray="4 3"/>
+ ${etx(62,116,15,'#33210B',1,'ming','已測繪','start')}
+ ${etx(236,116,15,'#33210B',0,'cz','3','end')}
+ <circle cx="30" cy="138" r="8.5" fill="none" stroke="#8A8068" stroke-width="1.6"/>
+ ${etx(62,144,15,'#33210B',1,'ming','未探索','start')}
+ ${etx(236,144,15,'#33210B',0,'cz','13','end')}
+</g>`;
 
 /* 海域標籤 */
 LEGLAB.forEach(l=>{
  h+=`<g class="leglab" opacity="0">
-  <rect x="${l[0]-84}" y="${l[1]-22}" width="168" height="46" rx="3"
-    fill="#EADCB8" fill-opacity=".62" stroke="#7A6440" stroke-width=".9"/>
-  <text x="${l[0]}" y="${l[1]-6}" text-anchor="middle" font-family="'CZ',serif" font-size="9.5"
-    fill="#8A5A2E" letter-spacing="3.4">${l[3]}</text>
-  <text x="${l[0]}" y="${l[1]+15}" text-anchor="middle" font-family="'WK',serif"
-    font-weight="400" font-size="17" fill="#3B2710" letter-spacing="2">${l[2]}</text></g>`;
+  <rect x="${l[0]-88}" y="${l[1]-24}" width="176" height="50" rx="3"
+    fill="#EADCB8" fill-opacity=".72" stroke="#5C3F1C" stroke-width="1.1"/>
+  ${etx(l[0],l[1]-6,11,'#6B4520',2.6,'cz',l[3])}
+  ${etx(l[0],l[1]+16,17,'#33210B',2,'ming',l[2])}
+ </g>`;
 });
 
 /* 航線 */
@@ -473,20 +487,16 @@ h+=`<circle id="ping" cx="-99" cy="-99" r="18" fill="none" stroke="#B01E17" stro
 h+=`<g id="mkStart" opacity="0" filter="url(#sh)">
  <path d="M ${POS[0][0]-62} ${POS[0][1]-64} h 124 v 30 l -62 11 l -62 -11 Z"
    fill="#EADCB8" fill-opacity=".93" stroke="#3B2710" stroke-width="1.5"/>
- <text x="${POS[0][0]}" y="${POS[0][1]-52}" text-anchor="middle" font-family="'CZ',serif"
-   font-size="11.5" fill="#6B4520" letter-spacing="2.4">SET SAIL</text>
- <text x="${POS[0][0]}" y="${POS[0][1]-37}" text-anchor="middle" font-family="'WK',serif"
-   font-size="16" fill="#3B2710" letter-spacing="5">起 點</text>
+ ${etx(POS[0][0],POS[0][1]-52,11.5,'#6B4520',2.4,'cz','SET SAIL')}
+ ${etx(POS[0][0],POS[0][1]-36,17,'#33210B',5,'ming','起 點')}
  <path d="M ${POS[0][0]} ${POS[0][1]-33} l 0 12" stroke="#3B2710" stroke-width="1.6"/></g>`;
 
 /* 終點碑 */
 h+=`<g id="mkEnd" opacity="0" filter="url(#sh)">
  <path d="M ${POS[44][0]-70} ${POS[44][1]-66} h 140 v 30 l -70 11 l -70 -11 Z"
    fill="#EADCB8" fill-opacity=".93" stroke="#3B2710" stroke-width="1.5"/>
- <text x="${POS[44][0]}" y="${POS[44][1]-54}" text-anchor="middle" font-family="'CZ',serif"
-   font-size="11.5" fill="#6B4520" letter-spacing="1.8">JOURNEY'S END</text>
- <text x="${POS[44][0]}" y="${POS[44][1]-39}" text-anchor="middle" font-family="'WK',serif"
-   font-size="16" fill="#3B2710" letter-spacing="5">終 點</text>
+ ${etx(POS[44][0],POS[44][1]-54,11.5,'#6B4520',1.8,'cz',"JOURNEY'S END")}
+ ${etx(POS[44][0],POS[44][1]-38,17,'#33210B',5,'ming','終 點')}
  <path d="M ${POS[44][0]} ${POS[44][1]-35} l 0 14" stroke="#3B2710" stroke-width="1.6"/></g>`;
 
 /* 航行中的船（沿航線跑）*/
@@ -520,8 +530,7 @@ h+=`<g id="ship" opacity="0" transform="translate(${POS[3][0]-70},${POS[3][1]-62
  <path d="M-2 -9 q-14 6 -12 13 l12 5 Z" fill="#EADCB8" stroke="#463012" stroke-width="1.3"/>
  <rect x="-44" y="-62" width="88" height="24" rx="3" fill="#EADCB8" fill-opacity=".94"
    stroke="#B01E17" stroke-width="1.4"/>
- <text x="0" y="-45" text-anchor="middle" font-family="'WK',serif" font-size="15"
-   fill="#B01E17" letter-spacing="3">現在位置</text>
+ ${etx(0,-45,15,'#B01E17',3,'ming','現在位置')}
  <path d="M0 -38 L0 -28" stroke="#B01E17" stroke-width="1.6"/></g>`;
 
 const svg=document.getElementById('mapSvg'); svg.innerHTML=h;

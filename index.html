@@ -9,6 +9,7 @@
 <link rel="preload" as="image" href="assets/scroll-closed.jpg">
 <link rel="preload" as="image" href="assets/seal.webp">
 <link rel="preload" as="image" href="assets/map.jpg">
+<link rel="preload" as="image" href="assets/ship.webp">
 <link rel="preload" as="font" type="font/woff2" href="assets/ming.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="assets/wenkai.woff2" crossorigin>
 <style>
@@ -218,6 +219,23 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
 .lsi .nm{font-family:'WK',serif;font-size:15.5px;color:#3B2710}
 .lsi.none .nm{color:#8A8068}
 .lsi .nt{font-size:12px;color:#7A6440;line-height:1.65;margin-top:2px}
+#dim{position:fixed;inset:0;z-index:97;background:#080502;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:opacity 1.5s ease}
+#dim.out{opacity:0;pointer-events:none}
+#dim .box{text-align:center;color:#D9BE86;opacity:0;transform:translateY(8px);
+  transition:opacity 1.6s ease,transform 1.6s ease}
+#dim.on .box{opacity:1;transform:none}
+#dim svg{width:min(4.4vw,7.4vh);height:min(4.4vw,7.4vh);margin-bottom:min(1.6vw,2.8vh);
+  opacity:.85;animation:dimBr 3.2s ease-in-out infinite}
+@keyframes dimBr{0%,100%{opacity:.5}50%{opacity:.95}}
+#dim .t{font-family:'MING','WK',serif;font-weight:700;
+  font-size:min(1.5vw,2.7vh);letter-spacing:.42em;text-indent:.42em}
+#dim .s{font-family:'WK',serif;font-size:min(1vw,1.9vh);letter-spacing:.22em;
+  color:#8A7048;margin-top:min(1.1vw,2vh)}
+/* 四周昏暗：舞台永遠帶一層暗角 */
+#stage::after{content:'';position:absolute;inset:0;z-index:45;pointer-events:none;
+  background:radial-gradient(ellipse 78% 78% at 50% 50%,transparent 42%,rgba(6,4,2,.5) 92%)}
 #fcap{position:fixed;z-index:39;left:50%;bottom:5.5%;transform:translateX(-50%) translateY(10px);
   display:none;align-items:center;gap:14px;padding:11px 22px;max-width:86vw;
   background:linear-gradient(180deg,rgba(242,232,202,.96),rgba(224,209,170,.94));
@@ -339,6 +357,18 @@ body.film #bar,body.film #zc,body.film #mute,body.film #hint,body.film #info,bod
 
 </div>
 
+<div id="dim">
+  <div class="box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#D9BE86" stroke-width="1.3"
+         stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 15v-3a8 8 0 0 1 16 0v3"/>
+      <path d="M4 15a2 2 0 0 0 2 2h1v-5H6a2 2 0 0 0-2 2z"/>
+      <path d="M20 15a2 2 0 0 1-2 2h-1v-5h1a2 2 0 0 1 2 2z"/>
+    </svg>
+    <div class="t">建 議 配 戴 耳 機</div>
+    <div class="s">將四周調暗，音量放小　我們準備啟航</div>
+  </div>
+</div>
 <div id="fcap"><span class="no" id="fcapNo"></span><span class="nm" id="fcapNm"></span><span class="st" id="fcapSt"></span></div>
 <button id="bSkip">跳過 ▸</button>
 
@@ -353,6 +383,8 @@ body.film #bar,body.film #zc,body.film #mute,body.film #hint,body.film #info,bod
 <script>
 const MAP="assets/map.jpg";
 const LOGO="assets/logo.webp";
+const SHIP="assets/ship.webp";
+const SHIP_FLIP=false;
 
 const LEGS=[
  {name:'接單前',latin:'LEG I',isles:[
@@ -543,12 +575,10 @@ h+=`<g id="mkEnd" opacity="0" filter="url(#sh)">
  <path d="M ${POS[44][0]} ${POS[44][1]-35} l 0 14" stroke="#3B2710" stroke-width="1.6"/></g>`;
 
 /* 航行中的船（沿航線跑）*/
-h+=`<g id="sailer" opacity="0" filter="url(#sh)"><g transform="scale(.92)">
- <path d="M-20 7 q20 10 40 0 l-5 8 q-15 7 -30 0 Z" fill="#3B2710"/>
- <path d="M0 7 L0 -26" stroke="#3B2710" stroke-width="2"/>
- <path d="M1 -26 q15 7 13 17 l-13 5 Z" fill="#B01E17"/>
- <path d="M-2 -7 q-12 5 -10 11 l10 4 Z" fill="#EADCB8" stroke="#3B2710" stroke-width="1.1"/>
-</g></g>`;
+h+=`<g id="sailer" opacity="0" filter="url(#sh)">
+ <g transform="scale(${SHIP_FLIP?-1:1},1)">
+  <image href="${SHIP}" x="-42" y="-38" width="84" height="49" preserveAspectRatio="xMidYMid meet"/>
+ </g></g>`;
 
 /* 綠色毛筆勾 */
 FLAT.forEach((it,i)=>{ if(it.st!=='done')return; const [x,y]=POS[i];
@@ -575,14 +605,13 @@ FLAT.forEach((it,i)=>{ if(it.st!=='doing')return; const [x,y]=POS[i];
 
 /* 船 */
 h+=`<g id="ship" opacity="0" transform="translate(${POS[3][0]-70},${POS[3][1]-62})" filter="url(#sh)">
- <path d="M-24 8 q24 12 48 0 l-6 9 q-18 8 -36 0 Z" fill="#463012"/>
- <path d="M0 8 L0 -30" stroke="#463012" stroke-width="2.2"/>
- <path d="M1 -30 q18 8 16 20 l-16 6 Z" fill="#B01E17"/>
- <path d="M-2 -9 q-14 6 -12 13 l12 5 Z" fill="#EADCB8" stroke="#463012" stroke-width="1.3"/>
- <rect x="-44" y="-62" width="88" height="24" rx="3" fill="#EADCB8" fill-opacity=".94"
+ <g transform="scale(${SHIP_FLIP?-1:1},1)">
+  <image href="${SHIP}" x="-40" y="-30" width="80" height="47" preserveAspectRatio="xMidYMid meet"/>
+ </g>
+ <rect x="-46" y="-64" width="92" height="25" rx="3" fill="#EADCB8" fill-opacity=".94"
    stroke="#B01E17" stroke-width="1.4"/>
- ${etx(0,-45,15,'#B01E17',3,'ming','現在位置')}
- <path d="M0 -38 L0 -28" stroke="#B01E17" stroke-width="1.6"/></g>`;
+ ${etx(0,-46,15,'#B01E17',3,'ming','現在位置')}
+ <path d="M0 -39 L0 -30" stroke="#B01E17" stroke-width="1.6"/></g>`;
 
 const svg=document.getElementById('mapSvg'); svg.innerHTML=h;
 
@@ -670,10 +699,10 @@ function reveal(){
    while(bx.scrollHeight>bx.clientHeight && f>10.5 && guard++<40){ f-=0.5; bx.style.fontSize=f+'px'; }
   })();
   const ls=[...document.querySelectorAll('#ltbox .ln')];
-  const GAP = FILM ? 900 : 1500;
+  const GAP = FILM ? 1600*SPD : 1500;
   ls.forEach((p,i)=>setTimeout(()=>{ p.classList.add('in'); if(i<ls.length-1) sTick(); },
-    i===ls.length-1 ? (FILM?600:1300)+i*GAP : i*GAP));
-  if(FILM) setTimeout(openChart, (ls.length-1)*GAP + 2400);
+    i===ls.length-1 ? (FILM?700:1300)+i*GAP : i*GAP));
+  if(FILM) setTimeout(openChart, (ls.length-1)*GAP + 3600*SPD);
  },1500);
  document.getElementById('ltGo').onclick=openChart;
  document.getElementById('letter').onclick=e=>{
@@ -735,7 +764,6 @@ function run(){
 
  const CAM=2.15, PRE=FILM?2800:0;
  /* 一站一停：每座島 = 航行 TRAVEL 毫秒 → 停靠 HOLD 毫秒（停的時候打勾／升旗）*/
- const SPD = parseFloat(new URLSearchParams(location.search).get('speed')) || 1;
  const TRAVEL = (FILM?420:110)*SPD, HOLD = (FILM?1050:90)*SPD;
  const STEP = TRAVEL+HOLD, DUR = POS.length*STEP;
  const t0 = performance.now()+PRE;
@@ -927,6 +955,7 @@ apply(false);
 
 /* ══ 導演模式 ══ */
 const FILM = !new URLSearchParams(location.search).has('nofilm');
+const SPD  = parseFloat(new URLSearchParams(location.search).get('speed')) || 1;
 /* 把地圖座標 (mx,my) 擺到畫面中央，縮放 s；lerp<1 為平滑跟隨 */
 function camAt(mx,my,s,lerp){
  const b=box(), vb=svg.viewBox.baseVal;
@@ -950,7 +979,18 @@ function camMove(mx,my,s,ms,done){
   if(u<1) requestAnimationFrame(f); else if(done) done();
  })(t0);
 }
-if(FILM) document.body.classList.add('film');   // 一樣從封蠟開始，只是自動演完
+if(FILM) document.body.classList.add('film');
+
+/* 開場：昏暗＋耳機提示 */
+(function(){
+ const d=document.getElementById('dim'); if(!d) return;
+ let gone=false;
+ const go=()=>{ if(gone)return; gone=true; d.classList.add('out');
+   setTimeout(()=>{ d.style.display='none'; }, 1600); };
+ setTimeout(()=>d.classList.add('on'), 500);
+ setTimeout(go, 5200);
+ d.addEventListener('click', go);
+})();   // 一樣從封蠟開始，只是自動演完
 
 /* 點島 */
 const iNo=document.getElementById('iNo'),iNm=document.getElementById('iNm'),

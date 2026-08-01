@@ -214,7 +214,7 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
 .lsi .nm{font-family:'WK',serif;font-size:15.5px;color:#3B2710}
 .lsi.none .nm{color:#8A8068}
 .lsi .nt{font-size:12px;color:#7A6440;line-height:1.65;margin-top:2px}
-body.film #bar,body.film #zc,body.film #mute,body.film #hint,body.film #info,body.film #rot{display:none!important}
+body.film #bar,body.film #bFilm,body.film #zc,body.film #mute,body.film #hint,body.film #info,body.film #rot{display:none!important}
 #fstart{position:fixed;inset:0;z-index:95;display:none;flex-direction:column;
   align-items:center;justify-content:center;gap:26px;background:#0B0703;cursor:pointer}
 #fstart.on{display:flex}
@@ -271,6 +271,7 @@ body.film #bar,body.film #zc,body.film #mute,body.film #hint,body.film #info,bod
     <div class="lv" id="zLv">100%</div>
   </div>
   <div id="bar">
+    <button class="bbtn" id="bFilm">▶ 播放航程影片</button>
     <button class="bbtn" id="bLs">航程總覽</button>
     <button class="bbtn" id="bUn">未探索的三座島</button>
     <button class="bbtn" id="bRe">重看航程</button>
@@ -307,7 +308,6 @@ body.film #bar,body.film #zc,body.film #mute,body.film #hint,body.film #info,bod
   <button class="x" onclick="document.getElementById('veil').classList.remove('show')">收起</button>
 </div></div>
 
-<div id="fstart"><img src="assets/logo.webp" alt=""><div class="t">輕　觸　開　始</div></div>
 <div id="fend"><img src="assets/logo.webp" alt="">
   <div class="t">穎 利 科 技　航 海 圖</div>
   <div class="s">26 / 45 &nbsp;·&nbsp; MMXXVI</div></div>
@@ -682,40 +682,56 @@ function run(){
  sailer.style.transition='opacity .5s';sailer.setAttribute('opacity','1');
 
  const CAM=2.15, PRE=FILM?2800:0;
- const D=FILM?10500:8200, t0=performance.now()+PRE;
+ /* 一站一停：每座島 = 航行 TRAVEL 毫秒 → 停靠 HOLD 毫秒（停的時候打勾／升旗）*/
+ const SPD = parseFloat(new URLSearchParams(location.search).get('speed')) || 1;
+ const TRAVEL = (FILM?340:110)*SPD, HOLD = (FILM?680:90)*SPD;
+ const STEP = TRAVEL+HOLD, DUR = POS.length*STEP;
+ const t0 = performance.now()+PRE;
  if(FILM){ S=1;TX=0;TY=0;apply(false); }
- let nextI=0,nextLeg=0;
+ let nextI=0, nextLeg=0;
+
+ function landfall(i){
+  const g=isles[i], it=FLAT[i];
+  g.style.transition='opacity .45s';
+  g.style.opacity = it.st==='none' ? '.72' : '1';
+  const ck=document.querySelector('.chk[data-i="'+i+'"]');
+  if(ck){ ck.style.transition='stroke-dashoffset .34s cubic-bezier(.3,.9,.4,1)';
+          ck.style.strokeDashoffset=0; sBrush(); }
+  const fg=document.querySelector('.flag[data-i="'+i+'"]');
+  if(fg){ fg.style.transition='opacity .5s'; fg.setAttribute('opacity','1'); }
+  if(!ck&&!fg) sTick();
+ }
+
  function tick(now){
-  if(PRE>0 && now<t0){                          // 前導：從全圖緩緩推近起點
-   const k=1-(t0-now)/PRE, e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
-   camAt(POS[0][0],POS[0][1],1+(CAM-1)*e,1);
-   return requestAnimationFrame(tick);
+  if(PRE>0 && now<t0){
+   const kk=1-(t0-now)/PRE, ee=kk<.5?2*kk*kk:1-Math.pow(-2*kk+2,2)/2;
+   camAt(POS[0][0],POS[0][1],1+(CAM-1)*ee,1);
+   requestAnimationFrame(tick); return;
   }
-  let u=Math.min(1,(now-t0)/D);
-  const e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;      // 緩起緩停
-  rt.style.strokeDashoffset=L*(1-e);
+  const el = Math.max(0, now-t0);                        // rAF 時間戳可能早於 t0，要夾住
+  const idx = Math.max(0, Math.min(POS.length-1, Math.floor(el/STEP)));
+  const seg = Math.max(0, el - idx*STEP);
+  const k   = Math.max(0, Math.min(1, seg/TRAVEL));
+  const ke  = k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+  const from = idx===0 ? 0 : (AT[idx-1]||0), to = (AT[idx]||0);
+  let e = from + (to-from)*ke;
+  if(!isFinite(e)) e = 0;
+
+  rt.style.strokeDashoffset = L*(1-e);
   const p=rt.getPointAtLength(L*e), q=rt.getPointAtLength(Math.min(L,L*e+6));
   const a=Math.atan2(q.y-p.y,q.x-p.x)*180/Math.PI;
   sailer.setAttribute('transform',`translate(${p.x},${p.y}) rotate(${a*.35})`);
-  if(FILM) camAt(p.x,p.y,CAM,.085);            // 跟拍，帶阻尼
+  if(FILM) camAt(p.x,p.y, CAM + (k>=1?0.22:0), .085);
 
   while(nextLeg<LEGAT.length && e>=LEGAT[nextLeg]-.005){
-   const g=labs[nextLeg];if(g){g.style.transition='opacity .7s';g.setAttribute('opacity','1')}
+   const g=labs[nextLeg]; if(g){g.style.transition='opacity .7s';g.setAttribute('opacity','1');}
    nextLeg++;
   }
-  while(nextI<AT.length && e>=AT[nextI]){
-   const g=isles[nextI], it=FLAT[nextI];
-   g.style.transition='opacity .45s';
-   g.style.opacity = it.st==='none' ? '.72' : '1';
-   const ck=document.querySelector('.chk[data-i="'+nextI+'"]');
-   if(ck){ck.style.transition='stroke-dashoffset .3s cubic-bezier(.3,.9,.4,1)';
-    ck.style.strokeDashoffset=0; sBrush();}
-   const fg=document.querySelector('.flag[data-i="'+nextI+'"]');
-   if(fg){fg.style.transition='opacity .5s';fg.setAttribute('opacity','1');}
-   if(!ck&&!fg) sTick();
-   nextI++;
-  }
-  if(u<1) requestAnimationFrame(tick); else finish();
+  while(nextI<idx) landfall(nextI++);
+  if(k>=1 && nextI===idx) landfall(nextI++);
+
+  if(el<DUR) requestAnimationFrame(tick);
+  else { while(nextI<AT.length) landfall(nextI++); finish(); }
  }
  requestAnimationFrame(tick);
 
@@ -853,13 +869,7 @@ function camMove(mx,my,s,ms,done){
   if(u<1) requestAnimationFrame(f); else if(done) done();
  })(t0);
 }
-if(FILM){
- document.body.classList.add('film');
- document.getElementById('fstart').classList.add('on');
- document.getElementById('fstart').onclick=function(){
-  this.classList.remove('on'); reveal();
- };
-}
+if(FILM) document.body.classList.add('film');   // 一樣從封蠟開始，只是自動演完
 
 /* 點島 */
 const iNo=document.getElementById('iNo'),iNm=document.getElementById('iNm'),
@@ -937,6 +947,8 @@ function flyTo(i){
  [...pg.children].forEach(a=>a.beginElement&&a.beginElement());
 }
 
+document.getElementById('bFilm').onclick=()=>{sClick(.5);
+ setTimeout(()=>{location.href=location.pathname+'?film=1';},180);};
 document.getElementById('bLs').onclick=()=>{sClick(.5);document.getElementById('lsv').classList.add('show')};
 document.getElementById('lsv').onclick=e=>{if(e.target.id==='lsv')e.currentTarget.classList.remove('show')};
 

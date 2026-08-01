@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>穎利科技 · 航海圖</title>
+<meta name="theme-color" content="#1A1208">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#E5D7B4;
+  --paper-d:#CFBC90;
+  --ink:#4A3620;
+  --ink-l:#7A6440;
+  --rhumb:#A8492F;
+  --sea:#D8CAA4;
+  --land:#C4AE7E;
+  --coast:#6B5230;
+  --green:#3D7A38;
+  --red:#B01E17;
+  --fog:#9E9074;
+  --wood:#4A2F16;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#120C06}
+body{
+  font-family:"Noto Sans TC",sans-serif;color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ══ 舞台 ══ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#stage::before{ /* 暗室 */
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(120% 100% at 50% 45%, #2A1B0C, #0D0904 70%);
+}
+
+/* ══ 卷軸 ══ */
+#paper{
+  position:absolute;inset:0;
+  clip-path:inset(0 50% 0 50%);
+  transition:clip-path 1.5s cubic-bezier(.62,.02,.2,1);
+  background:var(--paper);
+}
+#paper.open{clip-path:inset(0 0 0 0)}
+.rod{
+  position:absolute;top:0;bottom:0;width:26px;z-index:40;
+  background:linear-gradient(90deg,#2E1B0A,var(--wood) 32%,#7A5028 52%,var(--wood) 72%,#241408);
+  box-shadow:0 0 24px rgba(0,0,0,.65);
+  transition:transform 1.5s cubic-bezier(.62,.02,.2,1);
+}
+.rod::before,.rod::after{
+  content:'';position:absolute;left:-5px;right:-5px;height:20px;
+  background:linear-gradient(90deg,#241408,#8A5C2E 50%,#241408);
+  border-radius:3px;
+}
+.rod::before{top:-4px} .rod::after{bottom:-4px}
+#rodL{left:0;transform:translateX(calc(50vw - 26px))}
+#rodR{right:0;transform:translateX(calc(-50vw + 26px))}
+#rodL.open,#rodR.open{transform:translateX(0)}
+
+/* 封蠟 */
+#seal{
+  position:absolute;z-index:60;width:104px;height:104px;border-radius:50%;
+  background:radial-gradient(circle at 36% 30%, #D6342A, #8E1108 62%, #5C0703);
+  box-shadow:0 6px 22px rgba(0,0,0,.7), inset 0 -5px 14px rgba(0,0,0,.45);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  border:none;font-family:"Cinzel",serif;font-weight:700;font-size:34px;color:#F4D9A0;
+  letter-spacing:.05em;text-shadow:0 2px 4px rgba(0,0,0,.6);
+  animation:sealBreathe 2.8s ease-in-out infinite;
+}
+@keyframes sealBreathe{
+  0%,100%{box-shadow:0 6px 22px rgba(0,0,0,.7), inset 0 -5px 14px rgba(0,0,0,.45), 0 0 0 0 rgba(214,52,42,.5)}
+  55%{box-shadow:0 6px 22px rgba(0,0,0,.7), inset 0 -5px 14px rgba(0,0,0,.45), 0 0 0 22px rgba(214,52,42,0)}
+}
+#seal:active{transform:scale(.94)}
+#seal.crack{animation:sealGo .55s ease-in forwards}
+@keyframes sealGo{
+  0%{transform:scale(1) rotate(0);opacity:1}
+  35%{transform:scale(1.15) rotate(-7deg)}
+  100%{transform:scale(.5) rotate(28deg) translateY(90px);opacity:0}
+}
+#sealCap{
+  position:absolute;z-index:59;text-align:center;color:#E8D5A8;
+  transform:translateY(96px);pointer-events:none;
+}
+#sealCap .a{font-family:"Cinzel",serif;font-size:11px;letter-spacing:.42em;opacity:.7}
+#sealCap .b{font-family:"Noto Serif TC",serif;font-size:15px;letter-spacing:.3em;margin-top:9px}
+#sealCap.gone,#seal.gone{display:none}
+
+/* ══ 地圖 ══ */
+#map{position:absolute;inset:0;opacity:0;transition:opacity .8s .5s}
+#map.on{opacity:1}
+#mapSvg{width:100%;height:100%;display:block}
+/* 紙紋・污漬・燒邊 */
+#paper::after{
+  content:'';position:absolute;inset:0;z-index:30;pointer-events:none;
+  background:
+    radial-gradient(38% 46% at 12% 20%, rgba(140,105,55,.16), transparent 70%),
+    radial-gradient(30% 34% at 88% 78%, rgba(120,88,44,.15), transparent 70%),
+    radial-gradient(22% 26% at 62% 12%, rgba(150,115,60,.12), transparent 70%),
+    radial-gradient(140% 120% at 50% 50%, transparent 52%, rgba(76,50,20,.34) 88%, rgba(48,30,10,.6));
+}
+
+/* ══ 卡圖許（羊皮框）══ */
+.cart{
+  position:absolute;z-index:35;
+  background:linear-gradient(180deg, rgba(244,234,206,.94), rgba(226,212,176,.92));
+  border:1.5px solid var(--ink-l);
+  box-shadow:0 3px 12px rgba(60,40,15,.3), inset 0 0 0 3px rgba(232,220,188,.9), inset 0 0 0 4.5px rgba(122,100,64,.55);
+  padding:11px 15px;opacity:0;transform:translateY(-6px);
+  transition:opacity .7s,transform .7s;
+}
+.cart.on{opacity:1;transform:none}
+#cTitle{left:2.4vw;top:2.6vh;max-width:44vw}
+#cTitle .eb{font-family:"Cinzel",serif;font-size:9.5px;letter-spacing:.34em;color:var(--ink-l)}
+#cTitle h1{font-family:"Noto Serif TC",serif;font-size:20px;letter-spacing:.08em;margin:3px 0 2px;white-space:nowrap}
+#cTitle .sb{font-family:"Cinzel",serif;font-size:9px;letter-spacing:.2em;color:var(--ink-l)}
+#cStat{right:2.4vw;top:2.6vh;text-align:right}
+#cStat .n{font-family:"Cinzel",serif;font-weight:700;font-size:30px;line-height:1;color:var(--ink)}
+#cStat .n s{font-size:15px;color:var(--ink-l);text-decoration:none}
+#cStat .l{font-family:"Noto Serif TC",serif;font-size:11px;letter-spacing:.22em;color:var(--ink-l);margin-top:4px}
+#cLegend{right:2.4vw;bottom:2.6vh;font-size:11px;line-height:1.95}
+#cLegend i{display:inline-block;width:9px;height:9px;margin-right:7px;vertical-align:0}
+#cLegend .d i{background:var(--green);border-radius:50%}
+#cLegend .g i{background:var(--red);border-radius:50%}
+#cLegend .p i{border:1.4px dashed var(--ink-l);border-radius:50%}
+#cLegend .n i{border:1.4px solid var(--fog);border-radius:50%;opacity:.7}
+
+/* 島嶼詳情 */
+#cInfo{
+  left:2.4vw;bottom:2.6vh;max-width:min(48vw,420px);
+  opacity:0;transform:translateY(8px);pointer-events:none;
+}
+#cInfo.show{opacity:1;transform:none}
+#cInfo .no{font-family:"Cinzel",serif;font-size:10px;letter-spacing:.3em;color:var(--ink-l)}
+#cInfo .nm{font-family:"Noto Serif TC",serif;font-size:16px;margin:2px 0 4px}
+#cInfo .st{display:inline-block;font-size:10px;letter-spacing:.14em;padding:1px 8px;border:1px solid;margin-bottom:5px}
+#cInfo .st.done{color:var(--green);border-color:var(--green)}
+#cInfo .st.doing{color:var(--red);border-color:var(--red)}
+#cInfo .st.plan{color:var(--ink-l);border-color:var(--ink-l)}
+#cInfo .st.none{color:var(--fog);border-color:var(--fog)}
+#cInfo .nt{font-size:12px;color:var(--ink-l);line-height:1.7}
+
+/* 底部工具列 */
+#bar{
+  position:absolute;z-index:36;left:50%;transform:translateX(-50%);bottom:2.4vh;
+  display:flex;gap:9px;opacity:0;transition:opacity .7s;
+}
+#bar.on{opacity:1}
+.bbtn{
+  font-family:"Noto Serif TC",serif;font-size:12px;letter-spacing:.12em;
+  background:rgba(244,234,206,.9);color:var(--ink);
+  border:1.5px solid var(--ink-l);padding:7px 15px;cursor:pointer;
+  box-shadow:0 2px 8px rgba(60,40,15,.25);
+}
+.bbtn:active{transform:translateY(1px)}
+
+/* 未探索的三座島 */
+#veil{
+  position:fixed;inset:0;z-index:80;display:none;
+  align-items:center;justify-content:center;padding:5vh 5vw;
+  background:rgba(18,10,4,.72);backdrop-filter:blur(3px);
+}
+#veil.show{display:flex}
+#veilBox{
+  max-width:640px;max-height:88vh;overflow-y:auto;
+  background:linear-gradient(180deg,#F0E5C4,#DDCDA2);
+  border:1.5px solid var(--ink-l);padding:26px 28px;
+  box-shadow:0 20px 60px rgba(0,0,0,.6), inset 0 0 0 3px rgba(240,229,196,.9), inset 0 0 0 4.5px rgba(122,100,64,.5);
+}
+#veilBox h2{font-family:"Noto Serif TC",serif;font-size:19px;letter-spacing:.06em}
+#veilBox .sub{font-size:12.5px;color:var(--ink-l);margin:5px 0 18px}
+.iz{padding:14px 0;border-top:1px solid rgba(122,100,64,.28)}
+.iz:first-of-type{border-top:none;padding-top:0}
+.iz .t{font-family:"Noto Serif TC",serif;font-size:15px;margin-bottom:4px}
+.iz .t s{font-family:"Cinzel",serif;font-size:11px;letter-spacing:.2em;color:var(--ink-l);margin-right:9px;text-decoration:none}
+.iz .d{font-size:12.5px;color:var(--ink-l);line-height:1.85}
+#veilBox .x{
+  margin-top:18px;font-family:"Noto Serif TC",serif;font-size:12px;letter-spacing:.14em;
+  background:none;border:1.5px solid var(--ink-l);padding:7px 18px;cursor:pointer;color:var(--ink);
+}
+
+/* 橫放提示 */
+#rot{
+  position:fixed;inset:0;z-index:90;display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  background:#120C06;color:#E8D5A8;text-align:center;padding:24px;
+}
+#rot.show{display:flex}
+#rot svg{width:66px;height:66px;animation:rotHint 2.6s ease-in-out infinite}
+@keyframes rotHint{0%,45%{transform:rotate(0)}60%,100%{transform:rotate(90deg)}}
+#rot .t{font-family:"Noto Serif TC",serif;font-size:16px;letter-spacing:.2em}
+#rot .s{font-size:12px;opacity:.55;letter-spacing:.1em}
+#rot button{
+  margin-top:6px;background:none;border:1px solid rgba(232,213,168,.45);color:#E8D5A8;
+  padding:8px 18px;font-size:12px;letter-spacing:.14em;cursor:pointer;font-family:inherit;
+}
+
+/* 靜音鈕 */
+#mute{
+  position:absolute;z-index:37;right:2.4vw;top:calc(2.6vh + 74px);
+  width:32px;height:32px;border-radius:50%;cursor:pointer;
+  background:rgba(244,234,206,.85);border:1.4px solid var(--ink-l);
+  font-size:14px;line-height:1;opacity:0;transition:opacity .7s;
+}
+#mute.on{opacity:1}
+
+@media (max-height:400px){
+  #cTitle h1{font-size:17px} #cStat .n{font-size:25px}
+  .cart{padding:8px 12px} #cInfo .nm{font-size:14px}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="paper">
+    <div id="map"><svg id="mapSvg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet"></svg></div>
+  </div>
+
+  <div class="rod" id="rodL"></div>
+  <div class="rod" id="rodR"></div>
+
+  <button id="seal" aria-label="解開封蠟，展開航海圖">W</button>
+  <div id="sealCap">
+    <div class="a">WINZ TECHNOLOGY</div>
+    <div class="b">解 開 封 蠟</div>
+  </div>
+
+  <!-- 卡圖許 -->
+  <div class="cart" id="cTitle">
+    <div class="eb">CHART OF THE WINZ VOYAGE</div>
+    <h1>穎利科技　航　海　圖</h1>
+    <div class="sb">FROM FIRST CONTACT TO FINAL PAYMENT · MMXXVI</div>
+  </div>
+
+  <div class="cart" id="cStat">
+    <div class="n">26<s> / 45</s></div>
+    <div class="l">已 登 陸</div>
+  </div>
+
+  <div class="cart" id="cLegend">
+    <div class="d"><i></i>已登陸</div>
+    <div class="g"><i></i>靠岸中</div>
+    <div class="p"><i></i>已測繪</div>
+    <div class="n"><i></i>未探索</div>
+  </div>
+
+  <div class="cart" id="cInfo">
+    <div class="no" id="iNo">— —</div>
+    <div class="nm" id="iNm">點選任一座島</div>
+    <div class="st done" id="iSt">狀態</div>
+    <div class="nt" id="iNt">島上有什麼，點了就知道。</div>
+  </div>
+
+  <button id="mute" title="音效">🔊</button>
+
+  <div id="bar">
+    <button class="bbtn" id="btnUncharted">未探索的三座島</button>
+    <button class="bbtn" id="btnReplay">重看航程</button>
+  </div>
+</div>
+
+<div id="veil">
+  <div id="veilBox">
+    <h2>三座尚未探索的島</h2>
+    <div class="sub">13 段未探索航程，其實集中在三個地方。</div>
+    <div class="iz"><div class="t"><s>I</s>錢的另外一半</div><div class="d">
+      付錢那一側已經全線貫通——請購、議價、採購、進貨、請款、付款、費用分析。
+      但收錢那一側整條是空的：報價單、發票、應收帳款、收款沖帳。
+      這是最大的一塊，也是唯一直接影響現金流的一塊。</div></div>
+    <div class="iz"><div class="t"><s>II</s>品保的另外兩關</div><div class="d">
+      進料檢驗 IQC 已上線，但製程檢驗 IPQC 與成品檢驗 FQC 尚未系統化，
+      批號追溯的資料鏈已完整卻沒有查詢介面。客戶稽核時，這三項是必問。</div></div>
+    <div class="iz"><div class="t"><s>III</s>文件那一層</div><div class="d">
+      產品規格書、標籤稿、成分表、COA、MSDS 目前散落在個人手上，
+      沒有版本控管，也無法追溯客戶收到的是哪一版。</div></div>
+    <button class="x" onclick="document.getElementById('veil').classList.remove('show')">收起</button>
+  </div>
+</div>
+
+<div id="rot">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#E8D5A8" stroke-width="1.4">
+    <rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18.5h2"/>
+  </svg>
+  <div class="t">請 將 手 機 橫 放</div>
+  <div class="s">橫向才能看見完整的海域</div>
+  <button onclick="document.getElementById('rot').classList.remove('show')">還是直著看</button>
+</div>
+
+<script>
+/* ═══════════ 航程資料 ═══════════ */
+const LEGS = [
+  { name:'接單前', latin:'LEG I', isles:[
+    ['done','客戶開發與名單管理','客戶管理：跟進階段、興趣產品、配方偏好、客戶評分'],
+    ['none','需求訪談與產品 brief','劑型、容量、目標售價、銷售市場、月需求量'],
+    ['none','配方可行性評估',''],
+    ['doing','打樣申請與記錄','制度已定案，記錄表建置中'],
+    ['done','打樣品號 X01–X04','配方／瓶器／成品／其他，四類分流'],
+    ['done','打樣配方 X 版 BOM',''],
+    ['doing','送樣・客戶回饋・改版','隨打樣記錄表一併完成'],
+    ['done','成本試算','代工成本分析：固定費用分攤、設備折舊、間接人事'],
+    ['none','正式報價單','版本控管、有效期、MOQ、階梯價'],
+    ['done','客戶確認・品號轉正','換碼引擎＋轉正順序防呆']
+  ]},
+  { name:'量產準備', latin:'LEG II', isles:[
+    ['done','正式 BOM 建立','V1 已上線'],
+    ['plan','替代料機制','V2 已完成評估，獨立立項'],
+    ['done','包材瓶器・外箱配箱','外箱計算器'],
+    ['none','標籤稿・成分表・法規文件',''],
+    ['none','試產與放大驗證',''],
+    ['done','品號・單位換算・入數','品號中心系統']
+  ]},
+  { name:'訂單到生產', latin:'LEG III', isles:[
+    ['done','客戶正式訂單','出貨訂單管理'],
+    ['none','訂單審查','產能、交期、庫存、信用額度，目前憑經驗判斷'],
+    ['done','生產排程',''],
+    ['done','製令開立',''],
+    ['done','需求展開 MRP','採購計算器：BOM 展開＋庫存比對'],
+    ['done','請購→議價→採購→進貨','全鏈上線，含進度追蹤與進貨履歷'],
+    ['done','IQC 進貨檢驗',''],
+    ['done','入庫',''],
+    ['done','領料・退料',''],
+    ['done','生產執行與日報',''],
+    ['plan','批次製造記錄 BMR','已規劃：併入現行製令系統，快照式不可竄改'],
+    ['none','製程檢驗 IPQC',''],
+    ['done','半成品入庫',''],
+    ['done','充填包裝',''],
+    ['none','成品檢驗 FQC',''],
+    ['done','成品入庫','']
+  ]},
+  { name:'出貨到收款', latin:'LEG IV', isles:[
+    ['done','揀貨與分批出貨',''],
+    ['done','標籤・棧板標示','標籤列印系統'],
+    ['done','出貨單・送貨單',''],
+    ['doing','批號追溯','資料鏈已完整，尚缺查詢介面'],
+    ['none','出貨文件包','COA、檢驗報告、MSDS'],
+    ['none','開立發票',''],
+    ['none','應收帳款・對帳・催收',''],
+    ['none','收款沖帳','']
+  ]},
+  { name:'結算與回饋', latin:'LEG V', isles:[
+    ['none','實際成本回算','製令真實料工 vs 報價，代工成本模組的下一刀'],
+    ['done','月結','倉庫、出貨、品管、採購、生產、行銷、財會全棚'],
+    ['done','損益與費用分析','月結儀表板＋會計科目費用分析'],
+    ['none','客訴與退貨 RMA',''],
+    ['plan','呆滯料處理','待替代料機制完成後解除']
+  ]}
+];
+
+/* 島嶼座標（viewBox 1600×900） */
+const POS = [
+  [150,258],[243,208],[330,262],[186,352],[288,344],[142,448],[252,442],[350,400],[204,536],[322,524],
+  [432,626],[522,664],[452,736],[562,764],[644,700],[634,612],
+  [722,306],[802,244],[882,200],[962,234],[1032,294],
+  [702,394],[792,364],[882,324],[966,354],[1046,394],
+  [732,484],[822,458],[906,434],[986,464],[1062,492],[884,550],
+  [1142,304],[1226,258],[1312,302],[1162,398],[1252,368],[1342,404],[1202,492],[1302,498],
+  [1184,662],[1272,702],[1362,664],[1252,792],[1402,762]
+];
+const LEGLAB = [
+  [246,624,'接 單 前','LEG I'],
+  [538,832,'量 產 準 備','LEG II'],
+  [882,150,'訂 單 到 生 產','LEG III'],
+  [1242,570,'出 貨 到 收 款','LEG IV'],
+  [1292,846,'結 算 與 回 饋','LEG V']
+];
+const LABEL = { done:'已登陸', doing:'靠岸中', plan:'已測繪', none:'未探索' };
+
+/* ═══════════ 產圖 ═══════════ */
+const NS='http://www.w3.org/2000/svg';
+const svg=document.getElementById('mapSvg');
+let seed=20260801;
+function rnd(){ seed=(seed*9301+49297)%233280; return seed/233280; }
+
+function isleShape(cx,cy,r){
+  const n=9, pts=[];
+  for(let i=0;i<n;i++){
+    const a=i/n*Math.PI*2, rr=r*(.62+rnd()*.62);
+    pts.push([cx+Math.cos(a)*rr, cy+Math.sin(a)*rr*.72]);
+  }
+  let d=`M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for(let i=0;i<n;i++){
+    const p=pts[i], q=pts[(i+1)%n];
+    const mx=(p[0]+q[0])/2+(rnd()-.5)*r*.3, my=(p[1]+q[1])/2+(rnd()-.5)*r*.3;
+    d+=` Q ${mx.toFixed(1)} ${my.toFixed(1)} ${q[0].toFixed(1)} ${q[1].toFixed(1)}`;
+  }
+  return d+' Z';
+}
+
+let svgHtml = `
+<defs>
+  <filter id="rough" x="-25%" y="-25%" width="150%" height="150%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.024" numOctaves="3" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <filter id="brush" x="-35%" y="-35%" width="170%" height="170%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.055" numOctaves="2" seed="3" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="4.6" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <pattern id="hatch" width="7" height="7" patternTransform="rotate(38)" patternUnits="userSpaceOnUse">
+    <line x1="0" y1="0" x2="0" y2="7" stroke="#6B5230" stroke-width=".7" opacity=".3"/>
+  </pattern>
+  <g id="rose">
+    <circle r="52" fill="none" stroke="#A8492F" stroke-width=".8" opacity=".55"/>
+    <circle r="34" fill="none" stroke="#A8492F" stroke-width=".5" opacity=".4" stroke-dasharray="1.5 4"/>
+    <path d="M0 -52 L6 -8 L0 0 L-6 -8 Z" fill="#6B5230"/>
+    <path d="M0 52 L-6 8 L0 0 L6 8 Z" fill="#A8492F" opacity=".8"/>
+    <path d="M52 0 L8 6 L0 0 L8 -6 Z" fill="#A8492F" opacity=".8"/>
+    <path d="M-52 0 L-8 -6 L0 0 L-8 6 Z" fill="#6B5230"/>
+    <path d="M33 -33 L6 -4 L4 -6 Z M-33 33 L-6 4 L-4 6 Z M33 33 L4 6 L6 4 Z M-33 -33 L-4 -6 L-6 -4 Z" fill="#A8492F" opacity=".6"/>
+    <circle r="3" fill="#6B5230"/>
+  </g>
+</defs>
+<rect width="1600" height="900" fill="#DED0AB"/>`;
+
+/* 恆向線 */
+const ROSES=[[500,470],[1130,620],[1300,180]];
+svgHtml+='<g opacity=".3">';
+ROSES.forEach(c=>{
+  for(let i=0;i<32;i++){
+    const a=i/32*Math.PI*2;
+    svgHtml+=`<line x1="${c[0]}" y1="${c[1]}" x2="${(c[0]+Math.cos(a)*2100).toFixed(0)}" y2="${(c[1]+Math.sin(a)*2100).toFixed(0)}" stroke="${i%4===0?'#A8492F':'#8A7048'}" stroke-width="${i%4===0?.75:.42}"/>`;
+  }
+});
+svgHtml+='</g>';
+svgHtml+='<rect width="1600" height="900" fill="#DED0AB" opacity=".35"/>';
+
+/* 裝飾：船與海獸 */
+svgHtml+=`
+<g opacity=".5" stroke="#6B5230" fill="none" stroke-width="1.5" stroke-linecap="round">
+  <g transform="translate(560,180) scale(1.05)">
+    <path d="M-26 8 q26 12 52 0 l-6 8 q-20 8 -40 0 Z" fill="#6B5230" stroke="none" opacity=".85"/>
+    <path d="M0 8 L0 -30 M0 -28 q18 8 16 20 l-16 6 Z" />
+    <path d="M-2 -6 q-15 5 -13 14 l13 4 Z"/>
+  </g>
+  <g transform="translate(1470,470) scale(1)">
+    <path d="M-30 0 q12 -16 30 -12 t26 14 q-12 12 -28 10 t-28 -12 Z" fill="#6B5230" stroke="none" opacity=".55"/>
+    <path d="M26 2 q10 -10 16 -4 q-4 8 -14 8" fill="#6B5230" stroke="none" opacity=".55"/>
+    <path d="M-16 -6 q6 -12 14 -4" opacity=".6"/>
+  </g>
+  <g transform="translate(430,300) scale(.9)">
+    <path d="M-22 4 q10 -14 24 -10 t22 12 q-12 10 -24 8 t-22 -10 Z" fill="#6B5230" stroke="none" opacity=".4"/>
+  </g>
+</g>
+<text x="1462" y="820" text-anchor="middle" font-family="Cinzel,serif" font-size="15" fill="#8A7048" opacity=".55" letter-spacing="3" transform="rotate(-8 1462 820)">TERRA INCOGNITA</text>
+<text x="330" y="120" text-anchor="middle" font-family="Cinzel,serif" font-size="13" fill="#8A7048" opacity=".5" letter-spacing="4">MARE PRINCIPIVM</text>
+`;
+
+ROSES.forEach((c,i)=>{ svgHtml+=`<use href="#rose" transform="translate(${c[0]},${c[1]}) scale(${i===0?1:.72})" opacity="${i===0?.85:.6}"/>`; });
+
+/* 航線 */
+let routeD='M '+POS[0][0]+' '+POS[0][1];
+for(let i=1;i<POS.length;i++){
+  const p=POS[i-1], q=POS[i];
+  const mx=(p[0]+q[0])/2+(q[1]-p[1])*.14, my=(p[1]+q[1])/2-(q[0]-p[0])*.14;
+  routeD+=` Q ${mx.toFixed(0)} ${my.toFixed(0)} ${q[0]} ${q[1]}`;
+}
+svgHtml+=`<path id="route" d="${routeD}" fill="none" stroke="#8A4A2E" stroke-width="2.2" stroke-dasharray="9 8" opacity=".75" filter="url(#rough)"/>`;
+
+/* 海域標籤 */
+LEGLAB.forEach(l=>{
+  svgHtml+=`<g class="leglab" opacity="0">
+    <text x="${l[0]}" y="${l[1]}" text-anchor="middle" font-family="Cinzel,serif" font-size="10.5" fill="#A8492F" letter-spacing="3.5">${l[3]}</text>
+    <text x="${l[0]}" y="${l[1]+21}" text-anchor="middle" font-family="'Noto Serif TC',serif" font-weight="700" font-size="16" fill="#5C4526" letter-spacing="2">${l[2]}</text>
+  </g>`;
+});
+
+/* 島嶼 */
+const FLAT=[];
+LEGS.forEach((leg,li)=>leg.isles.forEach(is=>FLAT.push({st:is[0],nm:is[1],nt:is[2],leg:leg.name})));
+
+let idx=0;
+FLAT.forEach((it,i)=>{
+  const [cx,cy]=POS[i];
+  const r = it.st==='done' ? 26 : it.st==='doing' ? 25 : it.st==='plan' ? 22 : 20;
+  const d = isleShape(cx,cy,r);
+  const n = String(i+1).padStart(2,'0');
+  let body='';
+  if(it.st==='none'){
+    body=`<path d="${d}" fill="none" stroke="#9E9074" stroke-width="1.3" stroke-dasharray="4 5" opacity=".8" filter="url(#rough)"/>`;
+  }else if(it.st==='plan'){
+    body=`<path d="${d}" fill="#C4AE7E" fill-opacity=".35" stroke="#7A6440" stroke-width="1.4" stroke-dasharray="7 5" filter="url(#rough)"/>`;
+  }else{
+    body=`<path d="${d}" fill="#C4AE7E" stroke="#6B5230" stroke-width="1.7" filter="url(#rough)"/>
+          <path d="${d}" fill="url(#hatch)" opacity=".5"/>`;
+  }
+  svgHtml+=`<g class="isle" data-i="${i}" style="cursor:pointer">
+    ${body}
+    <text x="${cx}" y="${cy+r+16}" text-anchor="middle" font-family="Cinzel,serif" font-weight="600" font-size="12"
+          fill="${it.st==='none'?'#9E9074':'#5C4526'}" letter-spacing="1">${n}</text>
+    <circle cx="${cx}" cy="${cy}" r="${r+16}" fill="transparent"/>
+  </g>`;
+});
+
+/* 綠色毛筆勾（後畫，蓋在島上） */
+FLAT.forEach((it,i)=>{
+  if(it.st!=='done') return;
+  const [cx,cy]=POS[i];
+  svgHtml+=`<path class="chk" data-i="${i}" filter="url(#brush)"
+    d="M ${cx-15} ${cy+1} q 5 3 8 9 q 6 -16 20 -25"
+    fill="none" stroke="#3D7A38" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>`;
+});
+
+/* 靠岸中：紅旗 */
+FLAT.forEach((it,i)=>{
+  if(it.st!=='doing') return;
+  const [cx,cy]=POS[i];
+  svgHtml+=`<g class="flag" data-i="${i}" opacity="0">
+    <line x1="${cx}" y1="${cy+4}" x2="${cx}" y2="${cy-32}" stroke="#5C4526" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M ${cx+1} ${cy-32} l 22 7 l -22 7 Z" fill="#B01E17"/>
+    <circle cx="${cx}" cy="${cy}" r="30" fill="none" stroke="#B01E17" stroke-width="1.6" opacity=".55">
+      <animate attributeName="r" values="26;40;26" dur="2.6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values=".6;0;.6" dur="2.6s" repeatCount="indefinite"/>
+    </circle>
+  </g>`;
+});
+
+/* 現在位置的船（島 4） */
+(()=>{ const [cx,cy]=POS[3];
+  svgHtml+=`<g id="ship" opacity="0" transform="translate(${cx-58},${cy-46})">
+    <path d="M-22 8 q22 11 44 0 l-5 8 q-17 7 -34 0 Z" fill="#5C4526"/>
+    <path d="M0 8 L0 -26" stroke="#5C4526" stroke-width="2"/>
+    <path d="M1 -26 q16 7 14 18 l-14 5 Z" fill="#B01E17"/>
+    <path d="M-2 -8 q-13 5 -11 12 l11 4 Z" fill="#E5D7B4" stroke="#5C4526" stroke-width="1.2"/>
+    <text x="0" y="34" text-anchor="middle" font-family="'Noto Serif TC',serif" font-size="11.5" fill="#B01E17" letter-spacing="2">現在位置</text>
+  </g>`;
+})();
+
+svg.innerHTML=svgHtml;
+
+/* ═══════════ 音效 ═══════════ */
+let AC=null, muted=false;
+function ac(){ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); return AC; }
+function noise(dur,f0,f1,q,gain,type){
+  if(muted) return;
+  try{ const a=ac(),t=a.currentTime,len=Math.max(1,Math.floor(a.sampleRate*dur));
+    const b=a.createBuffer(1,len,a.sampleRate), d=b.getChannelData(0);
+    for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,1.1);
+    const s=a.createBufferSource(); s.buffer=b;
+    const fl=a.createBiquadFilter(); fl.type=type||'bandpass'; fl.Q.value=q;
+    fl.frequency.setValueAtTime(f0,t); fl.frequency.exponentialRampToValueAtTime(f1,t+dur);
+    const g=a.createGain(); g.gain.setValueAtTime(gain,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    s.connect(fl); fl.connect(g); g.connect(a.destination); s.start(t); s.stop(t+dur);
+  }catch(e){}
+}
+function tone(f0,f1,dur,gain,type){
+  if(muted) return;
+  try{ const a=ac(),t=a.currentTime,o=a.createOscillator(),g=a.createGain();
+    o.type=type||'sine'; o.frequency.setValueAtTime(f0,t);
+    o.frequency.exponentialRampToValueAtTime(f1,t+dur);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(gain,t+dur*.12);
+    g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+dur+.02);
+  }catch(e){}
+}
+const sndCrack =()=>{ noise(.18,2600,320,1.1,.28); tone(150,52,.32,.22,'sine'); };
+const sndUnroll=()=>{ noise(1.45,420,2400,.55,.10); };
+const sndBrush =()=>{ noise(.085,1500,4200,.7,.075); };
+const sndDone  =()=>{ tone(392,392,.5,.10,'triangle'); setTimeout(()=>tone(587,587,.7,.09,'triangle'),140); };
+
+document.getElementById('mute').onclick=function(){
+  muted=!muted; this.textContent=muted?'🔈':'🔊';
+};
+
+/* ═══════════ 展開流程 ═══════════ */
+let played=false;
+function reveal(){
+  document.getElementById('seal').classList.add('crack');
+  document.getElementById('sealCap').style.opacity='0';
+  sndCrack();
+  setTimeout(()=>{
+    document.getElementById('seal').classList.add('gone');
+    document.getElementById('sealCap').classList.add('gone');
+    document.getElementById('paper').classList.add('open');
+    document.getElementById('rodL').classList.add('open');
+    document.getElementById('rodR').classList.add('open');
+    sndUnroll();
+    setTimeout(()=>{ document.getElementById('map').classList.add('on'); runChart(); },520);
+  },440);
+}
+function runChart(){
+  // 航線
+  const rt=document.getElementById('route');
+  const L=rt.getTotalLength();
+  rt.style.strokeDasharray=L; rt.style.strokeDashoffset=L;
+  rt.style.transition='none'; void rt.getBoundingClientRect();
+  rt.style.transition='stroke-dashoffset 1.9s ease-out';
+  rt.style.strokeDashoffset=0;
+  setTimeout(()=>{ rt.style.strokeDasharray='9 8'; rt.style.strokeDashoffset=0; },2000);
+
+  // 海域標籤
+  document.querySelectorAll('.leglab').forEach((g,i)=>{
+    setTimeout(()=>{ g.style.transition='opacity .8s'; g.setAttribute('opacity','1'); }, 400+i*230);
+  });
+
+  // 毛筆打勾，一座一座
+  const chks=[...document.querySelectorAll('.chk')];
+  chks.forEach(p=>{ const l=p.getTotalLength();
+    p.style.strokeDasharray=l; p.style.strokeDashoffset=l; p.style.transition='none'; });
+  void svg.getBoundingClientRect();
+  chks.forEach((p,i)=>{
+    setTimeout(()=>{
+      const l=p.getTotalLength();
+      p.style.transition='stroke-dashoffset .28s cubic-bezier(.3,.9,.4,1)';
+      p.style.strokeDashoffset=0;
+      sndBrush();
+    }, 1500+i*95);
+  });
+
+  const after=1500+chks.length*95;
+  // 紅旗與船
+  setTimeout(()=>{
+    document.querySelectorAll('.flag').forEach(f=>{ f.style.transition='opacity .7s'; f.setAttribute('opacity','1'); });
+    const sh=document.getElementById('ship');
+    sh.style.transition='opacity 1s, transform 1.4s cubic-bezier(.3,.9,.4,1)';
+    sh.setAttribute('opacity','1');
+    sh.setAttribute('transform',`translate(${POS[3][0]-38},${POS[3][1]-52})`);
+  }, after+150);
+  // 卡圖許
+  setTimeout(()=>{
+    ['cTitle','cStat','cLegend'].forEach((id,i)=>
+      setTimeout(()=>document.getElementById(id).classList.add('on'), i*150));
+    document.getElementById('bar').classList.add('on');
+    document.getElementById('mute').classList.add('on');
+    sndDone();
+  }, after+500);
+  played=true;
+}
+
+document.getElementById('seal').onclick=reveal;
+
+/* 點島 */
+const iNo=document.getElementById('iNo'), iNm=document.getElementById('iNm'),
+      iSt=document.getElementById('iSt'), iNt=document.getElementById('iNt'),
+      cInfo=document.getElementById('cInfo');
+svg.addEventListener('click',e=>{
+  const g=e.target.closest('.isle'); if(!g) return;
+  const i=+g.dataset.i, it=FLAT[i];
+  iNo.textContent=`No. ${String(i+1).padStart(2,'0')} · ${it.leg}`;
+  iNm.textContent=it.nm;
+  iSt.className='st '+it.st; iSt.textContent=LABEL[it.st];
+  iNt.textContent=it.nt||'—';
+  cInfo.classList.add('on','show');
+  tone(700,900,.09,.05,'sine');
+});
+
+document.getElementById('btnUncharted').onclick=()=>document.getElementById('veil').classList.add('show');
+document.getElementById('veil').onclick=e=>{ if(e.target.id==='veil') e.currentTarget.classList.remove('show'); };
+document.getElementById('btnReplay').onclick=()=>{
+  document.querySelectorAll('.chk').forEach(p=>{const l=p.getTotalLength();p.style.transition='none';p.style.strokeDashoffset=l;});
+  document.querySelectorAll('.flag').forEach(f=>f.setAttribute('opacity','0'));
+  document.querySelectorAll('.leglab').forEach(g=>g.setAttribute('opacity','0'));
+  const sh=document.getElementById('ship');
+  sh.style.transition='none'; sh.setAttribute('opacity','0');
+  sh.setAttribute('transform',`translate(${POS[3][0]-58},${POS[3][1]-46})`);
+  cInfo.classList.remove('show');
+  setTimeout(runChart,60);
+};
+
+/* 橫放提示 */
+function checkOrient(){
+  const portrait=window.innerHeight>window.innerWidth;
+  const phone=Math.min(window.innerWidth,window.innerHeight)<820;
+  document.getElementById('rot').classList.toggle('show', portrait&&phone&&!played);
+}
+checkOrient();
+window.addEventListener('resize',checkOrient);
+window.addEventListener('orientationchange',()=>setTimeout(checkOrient,200));
+</script>
+</body>
+</html>

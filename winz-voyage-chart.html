@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>穎利科技 · 系統航海圖</title>
+<meta name="theme-color" content="#071A26">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Noto+Serif+TC:wght@700&family=Noto+Sans+TC:wght@400;500;700&family=Chakra+Petch:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --deep:#071A26;        /* 深海 */
+  --sea:#0C2634;         /* 近岸海面 */
+  --brass:#C8A24A;       /* 黃銅・已登陸 */
+  --brass-dim:#6B5A2E;   /* 黯淡黃銅 */
+  --red:#E30613;         /* 穎利紅・靠岸中 */
+  --fog:#3E5563;         /* 霧・未探索 */
+  --ink:#EAE2D2;         /* 海圖紙白 */
+  --muted:#8CA3B0;       /* 註記 */
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--deep);
+  color:var(--ink);
+  font-family:"Noto Sans TC",-apple-system,sans-serif;
+  line-height:1.65;
+  overflow-x:hidden;
+}
+/* 海面：緯線 + 遠處光暈 */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(200,162,74,.10), transparent 62%),
+    repeating-linear-gradient(0deg, rgba(200,162,74,.045) 0 1px, transparent 1px 68px),
+    linear-gradient(180deg, var(--sea), var(--deep) 42%);
+}
+.wrap{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:0 20px 64px}
+
+/* ───── 船首：標題 ───── */
+header{padding:46px 0 30px;text-align:center;position:relative}
+.rose{
+  width:104px;height:104px;margin:0 auto 22px;opacity:.5;
+  animation:spin 120s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.eyebrow{
+  font-family:"Chakra Petch",sans-serif;font-weight:500;
+  font-size:11px;letter-spacing:.42em;color:var(--brass);
+  text-transform:uppercase;margin-bottom:12px;
+}
+h1{
+  font-family:"Noto Serif TC",serif;font-weight:700;
+  font-size:29px;letter-spacing:.06em;line-height:1.35;
+}
+.latin{
+  font-family:"Cinzel",serif;font-size:12px;letter-spacing:.3em;
+  color:var(--muted);margin-top:9px;
+}
+.lede{
+  font-size:14px;color:var(--muted);margin-top:20px;
+  max-width:32em;margin-left:auto;margin-right:auto;
+}
+
+/* ───── 簽名元素：45 刻度航程尺 ───── */
+.gauge{margin:34px 0 8px}
+.gauge-top{
+  display:flex;align-items:baseline;gap:10px;
+  margin-bottom:12px;
+}
+.gauge-big{
+  font-family:"Chakra Petch",sans-serif;font-weight:700;
+  font-size:44px;line-height:1;color:var(--brass);
+}
+.gauge-big small{font-size:19px;color:var(--muted);font-weight:500}
+.gauge-lab{
+  font-size:12px;color:var(--muted);letter-spacing:.16em;
+  margin-left:auto;text-align:right;line-height:1.5;
+}
+.ticks{
+  display:flex;gap:2px;height:38px;align-items:flex-end;
+  padding:0 0 9px;border-bottom:1px solid rgba(200,162,74,.25);
+}
+.tick{flex:1;border-radius:1px}
+.tick.done{height:100%;background:var(--brass)}
+.tick.doing{height:100%;background:var(--red);box-shadow:0 0 7px rgba(227,6,19,.85)}
+.tick.plan{height:58%;background:var(--brass-dim)}
+.tick.none{height:26%;background:var(--fog)}
+.scale{
+  display:flex;justify-content:space-between;
+  font-family:"Chakra Petch",sans-serif;font-size:10px;
+  letter-spacing:.16em;color:var(--muted);margin-top:8px;
+}
+
+/* ───── 圖例 ───── */
+.legend{
+  display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 6px;
+}
+.lg{
+  display:flex;align-items:center;gap:7px;
+  font-size:12px;color:var(--muted);
+  border:1px solid rgba(200,162,74,.2);border-radius:999px;
+  padding:6px 12px 6px 9px;
+}
+.lg i{width:9px;height:9px;border-radius:50%;flex:none}
+.lg.d i{background:var(--brass)}
+.lg.g i{background:var(--red)}
+.lg.p i{background:transparent;border:1.5px dashed var(--brass-dim)}
+.lg.n i{background:transparent;border:1.5px solid var(--fog)}
+
+/* ───── 海域 ───── */
+.leg{margin-top:46px}
+.leg-head{
+  display:flex;align-items:flex-end;gap:12px;
+  padding-bottom:13px;margin-bottom:6px;
+  border-bottom:1px solid rgba(200,162,74,.22);
+}
+.leg-no{
+  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.24em;
+  color:var(--brass);white-space:nowrap;
+}
+.leg-name{
+  font-family:"Noto Serif TC",serif;font-weight:700;
+  font-size:19px;letter-spacing:.04em;
+}
+.leg-cnt{
+  margin-left:auto;font-family:"Chakra Petch",sans-serif;
+  font-size:12px;color:var(--muted);white-space:nowrap;letter-spacing:.06em;
+}
+.leg-cnt b{color:var(--brass);font-size:15px}
+
+/* ───── 航道與島嶼 ───── */
+.route{position:relative;padding-left:34px}
+.route::before{
+  content:'';position:absolute;left:8px;top:14px;bottom:14px;width:2px;
+  background:repeating-linear-gradient(180deg,
+    var(--brass-dim) 0 7px, transparent 7px 13px);
+}
+.isle{position:relative;padding:13px 0 13px 4px}
+.isle::before{  /* 島嶼標記 */
+  content:'';position:absolute;left:-31px;top:19px;
+  width:16px;height:16px;border-radius:50%;
+  background:var(--deep);border:2px solid var(--fog);
+}
+.isle.done::before{background:var(--brass);border-color:var(--brass)}
+.isle.doing::before{
+  background:var(--red);border-color:var(--red);
+  box-shadow:0 0 0 0 rgba(227,6,19,.55);
+  animation:beacon 2.4s ease-out infinite;
+}
+@keyframes beacon{
+  0%{box-shadow:0 0 0 0 rgba(227,6,19,.55)}
+  70%{box-shadow:0 0 0 11px rgba(227,6,19,0)}
+  100%{box-shadow:0 0 0 0 rgba(227,6,19,0)}
+}
+.isle.plan::before{border-style:dashed;border-color:var(--brass-dim)}
+.isle.done::after{  /* 已登陸的航道段點亮 */
+  content:'';position:absolute;left:-24px;top:14px;height:26px;width:2px;
+  background:var(--brass);opacity:.7;
+}
+.row{display:flex;align-items:baseline;gap:9px}
+.no{
+  font-family:"Chakra Petch",sans-serif;font-weight:700;
+  font-size:11px;color:var(--brass-dim);flex:none;width:20px;
+  letter-spacing:.04em;
+}
+.isle.done .no{color:var(--brass)}
+.isle.doing .no{color:var(--red)}
+.nm{font-size:15.5px;font-weight:500}
+.isle.none .nm{color:var(--fog)}
+.isle.none .no{color:#2E4250}
+.note{
+  font-size:12.5px;color:var(--muted);margin:3px 0 0 29px;
+}
+.isle.none .note{color:#5A7280}
+.flag{
+  display:inline-block;font-family:"Chakra Petch",sans-serif;
+  font-size:10px;font-weight:700;letter-spacing:.1em;
+  padding:1px 7px;border-radius:3px;margin-left:7px;
+  vertical-align:1.5px;
+}
+.flag.now{background:var(--red);color:#fff}
+.flag.next{background:rgba(200,162,74,.16);color:var(--brass);border:1px solid rgba(200,162,74,.4)}
+
+/* ───── 未探索的三座島 ───── */
+.uncharted{
+  margin-top:56px;padding:26px 22px;
+  border:1px solid rgba(200,162,74,.28);border-radius:4px;
+  background:linear-gradient(180deg, rgba(200,162,74,.05), transparent);
+}
+.uncharted h2{
+  font-family:"Noto Serif TC",serif;font-size:18px;font-weight:700;
+  letter-spacing:.04em;margin-bottom:6px;
+}
+.uncharted .sub{font-size:13px;color:var(--muted);margin-bottom:22px}
+.isl{padding:15px 0;border-top:1px solid rgba(200,162,74,.14)}
+.isl:first-of-type{border-top:none;padding-top:0}
+.isl .t{font-size:15px;font-weight:700;color:var(--brass);margin-bottom:4px}
+.isl .t span{
+  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.2em;
+  color:var(--brass-dim);margin-right:9px;
+}
+.isl .d{font-size:13.5px;color:var(--muted)}
+
+footer{
+  margin-top:44px;padding-top:22px;
+  border-top:1px solid rgba(200,162,74,.18);
+  font-family:"Chakra Petch",sans-serif;font-size:11px;
+  letter-spacing:.14em;color:var(--muted);
+  display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
+}
+
+/* 進場 */
+.rv{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
+.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .rv{opacity:1;transform:none}
+}
+@media (min-width:600px){
+  h1{font-size:34px}
+  .gauge-big{font-size:52px}
+  .ticks{height:46px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <svg class="rose" viewBox="0 0 100 100" aria-hidden="true">
+    <circle cx="50" cy="50" r="46" fill="none" stroke="#C8A24A" stroke-width=".7"/>
+    <circle cx="50" cy="50" r="35" fill="none" stroke="#C8A24A" stroke-width=".4" stroke-dasharray="1 4"/>
+    <path d="M50 4 L56 44 L50 50 L44 44 Z" fill="#C8A24A"/>
+    <path d="M50 96 L44 56 L50 50 L56 56 Z" fill="#6B5A2E"/>
+    <path d="M96 50 L56 56 L50 50 L56 44 Z" fill="#6B5A2E"/>
+    <path d="M4 50 L44 44 L50 50 L44 56 Z" fill="#6B5A2E"/>
+    <circle cx="50" cy="50" r="3" fill="#C8A24A"/>
+  </svg>
+  <div class="eyebrow">WINZ Technology</div>
+  <h1>穎利科技　系統航海圖</h1>
+  <div class="latin">FROM FIRST CONTACT TO FINAL PAYMENT</div>
+  <p class="lede">
+    從客戶開發到收款入帳，一張訂單要經過 45 段航程。
+    這張圖記錄我們已經航行到哪裡、哪些海域還沒有人去過。
+  </p>
+</header>
+
+<section class="gauge rv">
+  <div class="gauge-top">
+    <div class="gauge-big">26<small> / 45</small></div>
+    <div class="gauge-lab">已登陸<br>另有 3 段靠岸中</div>
+  </div>
+  <div class="ticks" id="ticks" aria-label="45 段航程進度"></div>
+  <div class="scale"><span>01　客戶開發</span><span>收款入帳　45</span></div>
+</section>
+
+<div class="legend rv">
+  <span class="lg d"><i></i>已登陸　系統上線運行</span>
+  <span class="lg g"><i></i>靠岸中　施工進行</span>
+  <span class="lg p"><i></i>已測繪　規劃完成待動工</span>
+  <span class="lg n"><i></i>未探索　尚無系統支援</span>
+</div>
+
+<main id="chart"></main>
+
+<section class="uncharted rv">
+  <h2>三座尚未探索的島</h2>
+  <p class="sub">13 段未探索航程，其實集中在三個地方。</p>
+
+  <div class="isl">
+    <div class="t"><span>I</span>錢的另外一半</div>
+    <div class="d">
+      付錢那一側已經全線貫通——請購、議價、採購、進貨、請款、付款、費用分析。
+      但收錢那一側整條是空的：報價單、發票、應收帳款、收款沖帳。
+      這是最大的一塊，也是最直接影響現金流的一塊。
+    </div>
+  </div>
+
+  <div class="isl">
+    <div class="t"><span>II</span>品保的另外兩關</div>
+    <div class="d">
+      進料檢驗 IQC 已上線，但製程檢驗 IPQC 與成品檢驗 FQC 尚未系統化，
+      批號追溯的資料齊全卻沒有查詢介面。客戶稽核時，這三項是必問。
+    </div>
+  </div>
+
+  <div class="isl">
+    <div class="t"><span>III</span>文件那一層</div>
+    <div class="d">
+      產品規格書、標籤稿、成分表、COA、MSDS 目前散落在個人手上，
+      沒有版本控管，也無法追溯客戶收到的是哪一版。
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>資訊部　江元家</span>
+  <span>2026 / 08 / 01</span>
+</footer>
+
+</div>
+
+<script>
+const LEGS = [
+  { no:'LEG I', name:'接單前', latin:'', isles:[
+    ['done','客戶開發與名單管理','客戶管理系統：跟進階段、興趣產品、配方偏好、客戶評分'],
+    ['none','需求訪談與產品 brief','劑型、容量、目標售價、銷售市場、月需求量'],
+    ['none','配方可行性評估',''],
+    ['doing','打樣申請與記錄','制度已定案，記錄表建置中', 'now'],
+    ['done','打樣品號 X01–X04','配方／瓶器／成品／其他，四類分流'],
+    ['done','打樣配方 X 版 BOM',''],
+    ['doing','送樣・客戶回饋・改版循環','隨打樣記錄表一併完成'],
+    ['done','成本試算','代工成本分析：固定費用分攤、設備折舊、間接人事'],
+    ['none','正式報價單','版本控管、有效期、MOQ、階梯價', 'next'],
+    ['done','客戶確認・打樣品號轉正','換碼引擎＋轉正順序防呆']
+  ]},
+  { no:'LEG II', name:'量產準備', isles:[
+    ['done','正式 BOM 建立','V1 已上線'],
+    ['plan','替代料機制','V2 已完成評估，獨立立項'],
+    ['done','包材瓶器規格・外箱配箱','外箱計算器'],
+    ['none','標籤稿・成分表・法規文件',''],
+    ['none','試產與放大驗證',''],
+    ['done','品號・單位換算・入數','品號中心系統']
+  ]},
+  { no:'LEG III', name:'訂單到生產', isles:[
+    ['done','客戶正式訂單','出貨訂單管理'],
+    ['none','訂單審查','產能、交期、庫存、信用額度，目前憑經驗判斷'],
+    ['done','生產排程',''],
+    ['done','製令開立',''],
+    ['done','需求展開 MRP','採購計算器：BOM 展開＋庫存比對'],
+    ['done','請購→議價→採購→進貨','全鏈上線，含進度追蹤與進貨履歷'],
+    ['done','IQC 進貨檢驗',''],
+    ['done','入庫',''],
+    ['done','領料・退料',''],
+    ['done','生產執行與日報',''],
+    ['plan','批次製造記錄 BMR','已規劃：併入現行製令系統，快照式不可竄改'],
+    ['none','製程檢驗 IPQC',''],
+    ['done','半成品入庫',''],
+    ['done','充填包裝',''],
+    ['none','成品檢驗 FQC',''],
+    ['done','成品入庫','']
+  ]},
+  { no:'LEG IV', name:'出貨到收款', isles:[
+    ['done','揀貨與分批出貨',''],
+    ['done','標籤・棧板標示','標籤列印系統'],
+    ['done','出貨單・送貨單',''],
+    ['doing','批號追溯','資料鏈已完整，尚缺查詢介面'],
+    ['none','出貨文件包','COA、檢驗報告、MSDS'],
+    ['none','開立發票',''],
+    ['none','應收帳款・對帳・催收',''],
+    ['none','收款沖帳','']
+  ]},
+  { no:'LEG V', name:'結算與回饋', isles:[
+    ['none','實際成本回算','製令真實料工 vs 報價，代工成本模組的下一刀'],
+    ['done','月結','倉庫、出貨、品管、採購、生產、行銷、財會全棚'],
+    ['done','損益與費用分析','月結儀表板＋會計科目費用分析'],
+    ['none','客訴與退貨 RMA',''],
+    ['plan','呆滯料處理','待替代料機制完成後解除']
+  ]}
+];
+
+const LABEL = { done:'已登陸', doing:'靠岸中', plan:'已測繪', none:'未探索' };
+
+// 航程尺
+const flat = LEGS.flatMap(l => l.isles.map(i => i[0]));
+document.getElementById('ticks').innerHTML =
+  flat.map(s => `<span class="tick ${s}"></span>`).join('');
+
+// 海圖本體
+let n = 0;
+document.getElementById('chart').innerHTML = LEGS.map(leg => {
+  const done = leg.isles.filter(i => i[0] === 'done').length;
+  const isles = leg.isles.map(i => {
+    n++;
+    const [st, name, note, flag] = i;
+    const fl = flag === 'now'  ? '<span class="flag now">現在位置</span>'
+             : flag === 'next' ? '<span class="flag next">下一段航程</span>' : '';
+    return `<div class="isle ${st}">
+      <div class="row"><span class="no">${String(n).padStart(2,'0')}</span>
+      <span class="nm">${name}${fl}</span></div>
+      ${note ? `<div class="note">${note}</div>` : `<div class="note">${LABEL[st]}</div>`}
+    </div>`;
+  }).join('');
+  return `<section class="leg rv">
+    <div class="leg-head">
+      <span class="leg-no">${leg.no}</span>
+      <span class="leg-name">${leg.name}</span>
+      <span class="leg-cnt"><b>${done}</b> / ${leg.isles.length}</span>
+    </div>
+    <div class="route">${isles}</div>
+  </section>`;
+}).join('');
+
+// 進場
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+}), { threshold: .08 });
+document.querySelectorAll('.rv').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

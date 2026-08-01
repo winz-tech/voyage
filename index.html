@@ -8,8 +8,8 @@
 <meta name="theme-color" content="#0E0904">
 <link rel="preload" as="image" href="assets/scroll-closed.jpg">
 <link rel="preload" as="image" href="assets/seal.webp">
-<link rel="preload" as="font" type="font/woff2" href="assets/wenkai.woff2" crossorigin>
 <link rel="preload" as="image" href="assets/map.jpg">
+<link rel="preload" as="font" type="font/woff2" href="assets/wenkai.woff2" crossorigin>
 <style>
 @font-face{font-family:'WK';src:url("assets/wenkai.woff2") format('woff2');font-weight:400;font-display:block}
 @font-face{font-family:'CZ';src:url("assets/cinzel.woff2") format('woff2');font-weight:600;font-display:block}
@@ -296,7 +296,7 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
 
 <script>
 const MAP="assets/map.jpg";
-const LOGO0="assets/logo.webp";
+const LOGO="assets/logo.webp";
 
 const LEGS=[
  {name:'接單前',latin:'LEG I',isles:[
@@ -547,7 +547,6 @@ document.addEventListener('visibilitychange',()=>{        // 切到別的分頁�
 });
 
 const CLICK="assets/click.mp3";
-const LOGO="assets/logo.webp";
 let pool=[],pi=0;
 function initPool(){ if(pool.length)return;
  for(let i=0;i<6;i++){const a=new Audio(CLICK);a.volume=.55;a.preload='auto';pool.push(a)} }
@@ -768,7 +767,7 @@ const iNo=document.getElementById('iNo'),iNm=document.getElementById('iNm'),
       iSt=document.getElementById('iSt'),iNt=document.getElementById('iNt'),
       info=document.getElementById('info');
 svg.addEventListener('click',e=>{
- if(moved>10||Date.now()-downT>600)return;
+ if(moved>10 || (downT && Date.now()-downT>600)) return;
  const g=e.target.closest('.isle');if(!g)return;
  const i=+g.dataset.i,it=FLAT[i];
  document.querySelectorAll('.isle.sel').forEach(o=>o.classList.remove('sel'));

@@ -60,7 +60,10 @@ body{font-family:"Noto Sans TC",sans-serif;color:var(--ink);-webkit-font-smoothi
   transition:clip-path 1.7s cubic-bezier(.6,.02,.2,1);
   display:flex;align-items:center;justify-content:center;background:#120B04}
 #paper.open{clip-path:inset(0 0 0 0)}
-#mapSvg{width:100%;height:100%;display:block}
+#zoom{position:absolute;inset:0;transform-origin:0 0;touch-action:none;
+  will-change:transform;cursor:grab}
+#zoom.grabbing{cursor:grabbing}
+#mapSvg{width:100%;height:100%;display:block;user-select:none;-webkit-user-select:none}
 .rod{position:absolute;top:0;bottom:0;width:26px;z-index:30;opacity:0;
   background:linear-gradient(90deg,#150A03,#3E2811 26%,#8A6330 48%,#B98F4A 53%,#4A2F16 74%,#150A03);
   box-shadow:0 0 34px rgba(0,0,0,.85);
@@ -97,6 +100,20 @@ body{font-family:"Noto Sans TC",sans-serif;color:var(--ink);-webkit-font-smoothi
   background:rgba(240,229,198,.92);color:var(--ink);border:1.4px solid var(--ink-l);
   padding:7px 15px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.4)}
 .bbtn:active{transform:translateY(1px)}
+#zc{position:absolute;z-index:37;right:2.2vw;bottom:2.4vh;display:flex;flex-direction:column;gap:6px;
+  opacity:0;transition:opacity .8s}
+#zc.on{opacity:1}
+#zc button{width:36px;height:36px;border-radius:50%;cursor:pointer;
+  background:rgba(240,229,198,.92);border:1.4px solid var(--ink-l);color:var(--ink);
+  font-family:"Cinzel",serif;font-size:17px;line-height:1;font-weight:600;
+  box-shadow:0 3px 10px rgba(0,0,0,.45)}
+#zc button:active{transform:translateY(1px)}
+#zc .lv{font-family:"Cinzel",serif;font-size:10px;text-align:center;color:#E3CE9C;
+  letter-spacing:.1em;text-shadow:0 1px 4px #000;margin-top:1px}
+#hint{position:absolute;z-index:38;left:50%;top:9%;transform:translateX(-50%);
+  font-family:"Noto Serif TC",serif;font-size:12.5px;letter-spacing:.2em;color:#E8D2A0;
+  text-shadow:0 2px 10px #000;opacity:0;transition:opacity 1s;pointer-events:none;white-space:nowrap}
+#hint.on{opacity:.85}
 #mute{position:absolute;z-index:37;left:2.2vw;top:2.6vh;width:32px;height:32px;border-radius:50%;
   background:rgba(240,229,198,.9);border:1.3px solid var(--ink-l);font-size:14px;cursor:pointer;
   opacity:0;transition:opacity .8s}
@@ -132,7 +149,7 @@ body{font-family:"Noto Sans TC",sans-serif;color:var(--ink);-webkit-font-smoothi
 </head>
 <body>
 <div id="stage">
-  <div id="paper"><svg id="mapSvg" viewBox="0 0 1672 941" preserveAspectRatio="xMidYMid meet"></svg></div>
+  <div id="paper"><div id="zoom"><svg id="mapSvg" viewBox="0 0 1672 941" preserveAspectRatio="xMidYMid meet"></svg></div></div>
   <div class="rod" id="rodL"></div><div class="rod" id="rodR"></div>
   <div class="frame" id="opening"></div>
   <div class="frame" id="closed"><button id="seal" aria-label="解開封蠟"></button></div>
@@ -142,6 +159,13 @@ body{font-family:"Noto Sans TC",sans-serif;color:var(--ink);-webkit-font-smoothi
   <div id="info">
     <div class="no" id="iNo">— —</div><div class="nm" id="iNm">點選任一座島</div>
     <div class="st done" id="iSt">狀態</div><div class="nt" id="iNt">島上有什麼，點了就知道。</div>
+  </div>
+  <div id="hint">雙指縮放 ・ 拖曳移動 ・ 點兩下放大</div>
+  <div id="zc">
+    <button id="zIn" title="放大">＋</button>
+    <button id="zOut" title="縮小">－</button>
+    <button id="zRe" title="回到全圖" style="font-size:14px">⤢</button>
+    <div class="lv" id="zLv">100%</div>
   </div>
   <div id="bar">
     <button class="bbtn" id="bUn">未探索的三座島</button>
@@ -410,16 +434,84 @@ function run(){
   setTimeout(()=>fade(document.getElementById('lgd')),200);
   document.getElementById('bar').classList.add('on');
   document.getElementById('mute').classList.add('on');
+  document.getElementById('zc').classList.add('on');
+  const hp=document.getElementById('hint');
+  hp.classList.add('on'); setTimeout(()=>hp.classList.remove('on'),4200);
   sDone(); played=true;
  },after+520);
 }
 document.getElementById('seal').onclick=reveal;
+
+
+/* ══ 縮放與平移 ══ */
+const zEl=document.getElementById('zoom'),pEl=document.getElementById('paper');
+let S=1,TX=0,TY=0,MINS=1,MAXS=6;
+function box(){return pEl.getBoundingClientRect()}
+function clamp(){const b=box();
+ TX=Math.min(0,Math.max(b.width*(1-S),TX));
+ TY=Math.min(0,Math.max(b.height*(1-S),TY));
+ if(S<=1){TX=0;TY=0}}
+function apply(anim){
+ clamp();
+ zEl.style.transition=anim?'transform .34s cubic-bezier(.3,.9,.4,1)':'none';
+ zEl.style.transform=`translate(${TX}px,${TY}px) scale(${S})`;
+ const l=document.getElementById('zLv');if(l)l.textContent=Math.round(S*100)+'%';
+}
+function zoomAt(ns,px,py,anim){
+ ns=Math.min(MAXS,Math.max(MINS,ns));
+ const b=box(),x=px-b.left,y=py-b.top;
+ TX=x-(x-TX)*(ns/S); TY=y-(y-TY)*(ns/S); S=ns; apply(anim);
+}
+/* 滾輪 */
+pEl.addEventListener('wheel',e=>{e.preventDefault();
+ zoomAt(S*(e.deltaY<0?1.16:1/1.16),e.clientX,e.clientY,false);},{passive:false});
+/* 拖曳 / 捏合 */
+let pts=new Map(),last=null,pd0=0,ps0=1,pc0=null,moved=0,downT=0;
+zEl.addEventListener('pointerdown',e=>{
+ zEl.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ moved=0; downT=Date.now();
+ if(pts.size===1){last={x:e.clientX,y:e.clientY};zEl.classList.add('grabbing')}
+ if(pts.size===2){const a=[...pts.values()];
+  pd0=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);ps0=S;
+  pc0={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2}}
+});
+zEl.addEventListener('pointermove',e=>{
+ if(!pts.has(e.pointerId))return;
+ pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(pts.size===2){const a=[...pts.values()];
+  const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
+  if(pd0>0){moved+=99;zoomAt(ps0*(d/pd0),pc0.x,pc0.y,false)}
+  return;}
+ if(pts.size===1&&last){
+  const dx=e.clientX-last.x,dy=e.clientY-last.y;
+  moved+=Math.abs(dx)+Math.abs(dy);
+  if(S>1){TX+=dx;TY+=dy;apply(false)}
+  last={x:e.clientX,y:e.clientY};}
+});
+function upPtr(e){pts.delete(e.pointerId);
+ if(pts.size<2){pd0=0}
+ if(pts.size===0){last=null;zEl.classList.remove('grabbing')}}
+zEl.addEventListener('pointerup',upPtr);
+zEl.addEventListener('pointercancel',upPtr);
+/* 點兩下 */
+let lastTap=0;
+zEl.addEventListener('pointerup',e=>{
+ const n=Date.now();
+ if(n-lastTap<300&&moved<10){ zoomAt(S>1.6?1:2.8,e.clientX,e.clientY,true); lastTap=0; }
+ else lastTap=n;
+});
+document.getElementById('zIn').onclick=()=>{const b=box();zoomAt(S*1.5,b.left+b.width/2,b.top+b.height/2,true)};
+document.getElementById('zOut').onclick=()=>{const b=box();zoomAt(S/1.5,b.left+b.width/2,b.top+b.height/2,true)};
+document.getElementById('zRe').onclick=()=>{S=1;TX=0;TY=0;apply(true)};
+addEventListener('resize',()=>apply(false));
+apply(false);
 
 /* 點島 */
 const iNo=document.getElementById('iNo'),iNm=document.getElementById('iNm'),
       iSt=document.getElementById('iSt'),iNt=document.getElementById('iNt'),
       info=document.getElementById('info');
 svg.addEventListener('click',e=>{
+ if(moved>10||Date.now()-downT>600)return;
  const g=e.target.closest('.isle');if(!g)return;
  const i=+g.dataset.i,it=FLAT[i];
  iNo.textContent=`No. ${String(i+1).padStart(2,'0')} · ${it.leg}`;

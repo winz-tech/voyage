@@ -457,30 +457,35 @@ h+=`<g id="stat" opacity="0">
 </g>`;
 
 /* 圖例 */
-h+=`<g id="lgd" opacity="0" transform="translate(1388,296)">
- <rect x="0" y="0" width="258" height="180" rx="4" fill="#EADCB8" fill-opacity=".88"
+h+=`<g id="lgd" opacity="0" transform="translate(1384,286)">
+ <rect x="0" y="0" width="264" height="206" rx="4" fill="#EADCB8" fill-opacity=".9"
    stroke="#5C3F1C" stroke-width="1.6"/>
- <rect x="5" y="5" width="248" height="170" rx="3" fill="none" stroke="#7A6440" stroke-width=".8" opacity=".7"/>
- ${etx(129,25,10,'#6B4520',3.2,'cz','LEGEND')}
- <line x1="22" y1="33" x2="236" y2="33" stroke="#7A6440" stroke-width=".8" opacity=".5"/>
- <path d="M20 54 q4.5 3.5 7 8 q6 -14 17 -22" fill="none" stroke="#2F7A33" stroke-width="4.2"
+ <rect x="6" y="6" width="252" height="194" rx="3" fill="none" stroke="#7A6440" stroke-width=".8" opacity=".7"/>
+ ${etx(132,28,10.5,'#6B4520',3.4,'cz','LEGEND')}
+ <line x1="26" y1="38" x2="238" y2="38" stroke="#7A6440" stroke-width=".9" opacity=".55"/>
+
+ <path d="M26 60 q5 4 7.5 8.5 q6.5 -15 18 -23.5" fill="none" stroke="#2F7A33" stroke-width="4.4"
    stroke-linecap="round" filter="url(#brush)"/>
- ${etx(60,58,14.5,'#33210B',1,'ming','已登陸','start')}
- ${etx(236,58,14.5,'#33210B',0,'cz',String(CNT.done),'end')}
- <line x1="25" y1="86" x2="25" y2="70" stroke="#5C3F1C" stroke-width="2.2" stroke-linecap="round"/>
- <path d="M26 70 l15 5 l-15 5 Z" fill="#B01E17"/>
- ${etx(60,86,14.5,'#33210B',1,'ming','靠岸中','start')}
- ${etx(236,86,14.5,'#33210B',0,'cz',String(CNT.doing),'end')}
- <path d="M19 118 L33 100" stroke="#A8761E" stroke-width="4" stroke-linecap="round"/>
- <ellipse cx="35" cy="97" rx="3.8" ry="5.6" fill="#A8761E" transform="rotate(37 35 97)"/>
- ${etx(60,114,14.5,'#33210B',1,'ming','人力航道','start')}
- ${etx(236,114,14.5,'#33210B',0,'cz',String(CNT.manual),'end')}
- <circle cx="28" cy="136" r="8.5" fill="none" stroke="#8A6A2E" stroke-width="2" stroke-dasharray="4 3"/>
- ${etx(60,142,14.5,'#33210B',1,'ming','已測繪','start')}
- ${etx(236,142,14.5,'#33210B',0,'cz',String(CNT.plan),'end')}
- <circle cx="28" cy="164" r="8.5" fill="none" stroke="#8A8068" stroke-width="1.6"/>
- ${etx(60,170,14.5,'#33210B',1,'ming','未探索','start')}
- ${etx(236,170,14.5,'#33210B',0,'cz',String(CNT.none),'end')}
+ ${etx(70,66,15,'#33210B',1.5,'ming','已登陸','start')}
+ ${etx(240,66,15,'#33210B',0,'cz',String(CNT.done),'end')}
+
+ <line x1="32" y1="100" x2="32" y2="82" stroke="#5C3F1C" stroke-width="2.4" stroke-linecap="round"/>
+ <path d="M33 82 l16 5.5 l-16 5.5 Z" fill="#B01E17"/>
+ ${etx(70,98,15,'#33210B',1.5,'ming','靠岸中','start')}
+ ${etx(240,98,15,'#33210B',0,'cz',String(CNT.doing),'end')}
+
+ <path d="M24 138 L40 118" stroke="#A8761E" stroke-width="4.2" stroke-linecap="round"/>
+ <ellipse cx="42" cy="115" rx="4" ry="6" fill="#A8761E" transform="rotate(37 42 115)"/>
+ ${etx(70,130,15,'#33210B',1.5,'ming','人力航道','start')}
+ ${etx(240,130,15,'#33210B',0,'cz',String(CNT.manual),'end')}
+
+ <circle cx="33" cy="157" r="9" fill="none" stroke="#8A6A2E" stroke-width="2" stroke-dasharray="4 3"/>
+ ${etx(70,162,15,'#33210B',1.5,'ming','已測繪','start')}
+ ${etx(240,162,15,'#33210B',0,'cz',String(CNT.plan),'end')}
+
+ <circle cx="33" cy="189" r="9" fill="none" stroke="#8A8068" stroke-width="1.7"/>
+ ${etx(70,194,15,'#33210B',1.5,'ming','未探索','start')}
+ ${etx(240,194,15,'#33210B',0,'cz',String(CNT.none),'end')}
 </g>`;
 
 /* 海域標籤 */

@@ -60,23 +60,29 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
   align-items:center;justify-content:center;transition:opacity .8s}
 #letter.on{opacity:1;pointer-events:auto}
 #letter.out{opacity:0;pointer-events:none}
-#ltbox{position:absolute;left:21%;right:21%;top:30%;height:46%;
+#ltbox{position:absolute;left:14%;right:14%;top:27%;height:50%;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  text-align:center;color:#3A2408;font-size:18px}
-#ltbox .ln{font-family:'WK',serif;line-height:1.85;letter-spacing:.06em;
-  font-size:1em;margin:0 0 .75em;
-  text-shadow:0 1px 0 rgba(255,238,200,.45),0 0 10px rgba(255,235,190,.35);
+  text-align:center;color:#241405;font-size:18px}
+#ltbox .ln{font-family:'MING','WK',serif;font-weight:700;line-height:1.62;letter-spacing:.04em;
+  font-size:1em;margin:0 0 .55em;
+  text-shadow:0 1px 0 rgba(255,244,214,.9),0 -1px 0 rgba(255,244,214,.55),
+              0 0 14px rgba(255,240,200,.75),0 0 26px rgba(255,232,180,.45);
   opacity:0;filter:blur(4px);transform:translateY(6px);
   transition:opacity 1.1s ease,filter 1.1s ease,transform 1.1s ease}
 #ltbox .ln.in{opacity:1;filter:none;transform:none}
-#ltbox .ln.em{color:#8E1108;font-size:1.14em;letter-spacing:.1em;margin-bottom:.9em;
-  text-shadow:0 1px 0 rgba(255,238,200,.5)}
-#ltbox .go{display:inline-block;cursor:pointer;flex:none;
-  font-family:'WK',serif;font-size:.86em;letter-spacing:.3em;
-  color:#3A2408;background:rgba(240,222,178,.5);
-  border:1.4px solid rgba(122,80,30,.7);padding:.5em 1.5em;
-  box-shadow:0 2px 10px rgba(60,35,10,.3)}
-#ltbox .go:hover{background:rgba(232,214,170,.7)}
+#ltbox .ln.em{color:#8A0C06;font-size:1.16em;letter-spacing:.08em;margin-bottom:0;
+  text-shadow:0 1px 0 rgba(255,244,214,.95),0 0 16px rgba(255,238,190,.8)}
+#letter .go{position:absolute;left:50%;bottom:11%;transform:translateX(-50%);
+  cursor:pointer;opacity:0;filter:blur(4px);
+  transition:opacity 1.1s ease,filter 1.1s ease;
+  font-family:'MING','WK',serif;font-weight:700;
+  font-size:min(1.3vw,2.4vh);letter-spacing:.3em;text-indent:.3em;
+  color:#F0DCAC;background:rgba(38,22,8,.72);
+  border:1.5px solid rgba(200,162,74,.75);padding:.6em 1.8em;
+  box-shadow:0 4px 16px rgba(0,0,0,.6),inset 0 0 20px rgba(255,214,140,.12);
+  backdrop-filter:blur(2px)}
+#letter .go.in{opacity:1;filter:none}
+#letter .go:hover{background:rgba(58,34,12,.85);color:#FFF0CC}
 #cap{position:absolute;z-index:56;left:50%;bottom:9%;transform:translateX(-50%);
   text-align:center;color:#E8D2A0;pointer-events:none;transition:opacity .4s;
   text-shadow:0 2px 12px rgba(0,0,0,.9)}
@@ -266,9 +272,9 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
   text-shadow:0 0 14px rgba(255,214,140,.7),0 2px 6px rgba(0,0,0,.85);
   animation:haloBr 2.2s ease-in-out infinite}
 /* 信箋按鈕發光 */
-#ltbox .go.glow{animation:goGlow 2.2s ease-in-out infinite}
-@keyframes goGlow{0%,100%{box-shadow:0 2px 10px rgba(60,35,10,.3),0 0 0 0 rgba(255,214,140,.5)}
-  50%{box-shadow:0 2px 10px rgba(60,35,10,.3),0 0 26px 6px rgba(255,214,140,.55)}}
+#letter .go.glow{animation:goGlow 2.2s ease-in-out infinite}
+@keyframes goGlow{0%,100%{box-shadow:0 4px 16px rgba(0,0,0,.6),0 0 0 0 rgba(255,214,140,.55)}
+  50%{box-shadow:0 4px 16px rgba(0,0,0,.6),0 0 30px 8px rgba(255,214,140,.6)}}
 /* 封蠟的光暈提示 */
 #seal.beckon::before{content:'';position:absolute;inset:-22%;border-radius:50%;
   background:radial-gradient(circle,rgba(255,214,140,.28),transparent 65%);
@@ -326,8 +332,8 @@ body.film #bar,body.film #zc,body.film #mute,body.film #hint,body.film #info,bod
       <p class="ln">過去它們沒有被寫下來，<br>散在每個人的腦袋裡、紙本裡、口頭交代裡。</p>
       <p class="ln">二〇二六年六月，我們開始把它畫成一張圖。</p>
       <p class="ln em">今天，我們已經登陸<span id="ltN">…</span>座島。</p>
-      <button class="ln go" id="ltGo">展　開　航　海　圖</button>
     </div>
+    <button class="go" id="ltGo">展　開　航　海　圖</button>
   </div>
   <div class="frame" id="closed"><button id="seal" aria-label="解開封蠟"></button></div>
   <div id="cap"><div class="a">WINZ TECHNOLOGY</div><div class="b">點 開 封 蠟</div></div>
@@ -752,13 +758,13 @@ function reveal(){
   document.getElementById('letter').classList.add('on');
   (function fit(){
    const bx=document.getElementById('ltbox');
-   let f=Math.max(12,Math.min(26,bx.clientHeight/10));
+   let f=Math.max(15,Math.min(30,bx.clientHeight/9));
    bx.style.fontSize=f+'px';
    let guard=0;
-   while(bx.scrollHeight>bx.clientHeight && f>10.5 && guard++<40){ f-=0.5; bx.style.fontSize=f+'px'; }
+   while(bx.scrollHeight>bx.clientHeight && f>13 && guard++<50){ f-=0.4; bx.style.fontSize=f+'px'; }
   })();
   const ls=[...document.querySelectorAll('#ltbox .ln')];
-  const btn = ls[ls.length-1], paras = ls.slice(0,-1);
+  const paras = ls, btn = document.getElementById('ltGo');
   if(AUTO){
    const GAP = 1600*SPD;
    paras.forEach((p,i)=>setTimeout(()=>{ p.classList.add('in'); sTick(); }, i*GAP));
@@ -1026,7 +1032,7 @@ document.getElementById('zRe').onclick=()=>{sClick(.3);S=1;TX=0;TY=0;apply(true)
 addEventListener('resize',()=>{apply(false);
  const bx=document.getElementById('ltbox');
  if(bx && document.getElementById('letter').classList.contains('on')){
-  let f=Math.max(12,Math.min(26,bx.clientHeight/10)); bx.style.fontSize=f+'px';
+  let f=Math.max(15,Math.min(30,bx.clientHeight/9)); bx.style.fontSize=f+'px';
   let g=0; while(bx.scrollHeight>bx.clientHeight && f>9 && g++<40){f-=0.6;bx.style.fontSize=f+'px';}
  }});
 apply(false);
@@ -1034,7 +1040,7 @@ apply(false);
 (function(){const e=document.getElementById('ltN'); if(e) e.textContent=cn(CNT.done);})();
 
 /* ══ 導演模式 ══ */
-const BUILD='2026-08-02 · r46';
+const BUILD='2026-08-02 · r48';
 console.log('%cWINZ VOYAGE  build '+BUILD,'color:#C8A24A;font-weight:700');
 const FILM = new URLSearchParams(location.search).has('film');   // 預設＝自己按節奏；?film=1＝全自動
 const SPD  = parseFloat(new URLSearchParams(location.search).get('speed')) || 1;

@@ -246,7 +246,7 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
 /* 四周昏暗：舞台永遠帶一層暗角 */
 #stage::after{content:'';position:absolute;inset:0;z-index:45;pointer-events:none;
   background:radial-gradient(ellipse 78% 78% at 50% 50%,transparent 42%,rgba(6,4,2,.5) 92%)}
-#tapHint{position:fixed;z-index:60;left:50%;bottom:7%;transform:translateX(-50%);
+#tapHint{position:fixed;z-index:98;left:50%;bottom:7%;transform:translateX(-50%);
   display:none;flex-direction:column;align-items:center;gap:min(1vw,1.8vh);
   pointer-events:none;text-align:center}
 #tapHint.on{display:flex;animation:thIn .8s ease}
@@ -777,8 +777,8 @@ function reveal(){
  },1500);
  document.getElementById('ltGo').onclick=openChart;
  document.getElementById('letter').onclick=e=>{
-  if(document.getElementById('letter').classList.contains('on')) openChart(); };
- if(!FILM) setTimeout(()=>{ if(!openChart._d) openChart(); }, 26000);
+  if(AUTO && document.getElementById('letter').classList.contains('on')) openChart(); };
+ if(AUTO) setTimeout(()=>{ if(!openChart._d) openChart(); }, 26000);
 }
 function openChart(){
  if(openChart._d) return; openChart._d=true;
@@ -1048,6 +1048,7 @@ function waitTap(cb, delay){
    h.classList.remove('on'); sClick(.34); cb(); };
  const onClick=e=>{
    if(e.target&&e.target.closest&&e.target.closest('#tapAuto')){ AUTO=true; }
+   e.preventDefault(); e.stopPropagation();     // 這一觸只用來前進，不觸發別的東西
    fire();
  };
  const onKey=e=>{ if(e.key===' '||e.key==='Enter'||e.key==='ArrowRight'){ e.preventDefault(); fire(); } };

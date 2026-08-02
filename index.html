@@ -153,13 +153,31 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
   background:rgba(240,229,198,.92);color:var(--ink);border:1.4px solid var(--ink-l);
   padding:7px 15px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.4)}
 .bbtn:active{transform:translateY(1px)}
-#zc{position:absolute;z-index:37;right:2.2vw;bottom:2.4vh;display:flex;flex-direction:column;gap:6px;
+#zc{position:absolute;z-index:37;right:2.2vw;bottom:2.4vh;display:flex;flex-direction:column;
+  align-items:center;gap:12px;
   opacity:0;transition:opacity .8s}
 #zc.on{opacity:1}
+#zTrack{position:relative;flex:none;width:12px;height:min(36vh,220px);border-radius:7px;
+  cursor:pointer;touch-action:none;
+  background:linear-gradient(180deg,rgba(58,38,14,.9),rgba(32,20,8,.94));
+  border:1.4px solid #5C3F1C;
+  box-shadow:inset 0 2px 7px rgba(0,0,0,.7),0 3px 12px rgba(0,0,0,.5)}
+#zTrack::after{content:'';position:absolute;inset:2px;border-radius:5px;pointer-events:none;
+  background:repeating-linear-gradient(180deg,rgba(200,162,74,.32) 0 1px,transparent 1px 15px)}
+#zFill{position:absolute;left:1px;right:1px;bottom:1px;border-radius:0 0 6px 6px;
+  background:linear-gradient(180deg,rgba(232,196,110,.6),rgba(150,110,40,.3));pointer-events:none}
+#zKnob{position:absolute;left:50%;width:28px;height:28px;border-radius:50%;pointer-events:none;
+  transform:translate(-50%,50%);
+  background:radial-gradient(circle at 34% 28%,#F7E4B2,#C8A24A 52%,#77551F);
+  border:1.5px solid #4A3316;
+  box-shadow:0 3px 9px rgba(0,0,0,.65),inset 0 -2px 5px rgba(0,0,0,.4),
+             inset 0 2px 4px rgba(255,240,200,.45)}
+#zKnob::before{content:'';position:absolute;left:6px;right:6px;top:50%;height:1.6px;
+  background:rgba(74,51,22,.55);transform:translateY(-1px);border-radius:2px}
 #zc button{width:36px;height:36px;border-radius:50%;cursor:pointer;
   background:rgba(240,229,198,.92);border:1.4px solid var(--ink-l);color:var(--ink);
-  font-family:'CZ',serif;font-size:17px;line-height:1;font-weight:600;
-  box-shadow:0 3px 10px rgba(0,0,0,.45)}
+  font-family:'CZ',serif;font-size:15px;line-height:1;font-weight:600;
+  box-shadow:0 3px 10px rgba(0,0,0,.45);flex:none}
 #zc button:active{transform:translateY(1px)}
 #zc .lv{font-family:'CZ',serif;font-size:10px;text-align:center;color:#E3CE9C;
   letter-spacing:.1em;text-shadow:0 1px 4px #000;margin-top:1px}
@@ -348,9 +366,8 @@ body.film #bar,body.film #zc,body.film #mute,body.film #hint,body.film #info,bod
   </div>
   <div id="hint">雙指縮放 ・ 拖曳移動 ・ 放大後會顯示島名</div>
   <div id="zc">
-    <button id="zIn" title="放大">＋</button>
-    <button id="zOut" title="縮小">－</button>
-    <button id="zRe" title="回到全圖" style="font-size:14px">⤢</button>
+    <div id="zTrack" title="拖曳縮放"><div id="zFill"></div><div id="zKnob"></div></div>
+    <button id="zRe" title="回到全圖">⤢</button>
     <div class="lv" id="zLv">100%</div>
   </div>
   <div id="bar">
@@ -1024,6 +1041,7 @@ function apply(anim){
  zEl.style.transform=`translate(${TX}px,${TY}px) scale(${S})`;
  const l=document.getElementById('zLv');if(l)l.textContent=Math.round(S*100)+'%';
  svg.classList.toggle('zin',S>=1.75);
+ if(typeof syncSlider==='function') syncSlider();
 }
 function zoomAt(ns,px,py,anim){
  ns=Math.min(MAXS,Math.max(MINS,ns));
@@ -1068,8 +1086,25 @@ zEl.addEventListener('pointerup',e=>{
  if(n-lastTap<300&&moved<10){ zoomAt(S>1.6?1:2.8,e.clientX,e.clientY,true); lastTap=0; }
  else lastTap=n;
 });
-document.getElementById('zIn').onclick=()=>{sClick(.3);const b=box();zoomAt(S*1.5,b.left+b.width/2,b.top+b.height/2,true)};
-document.getElementById('zOut').onclick=()=>{sClick(.3);const b=box();zoomAt(S/1.5,b.left+b.width/2,b.top+b.height/2,true)};
+/* 縮放滑桿 */
+const zTrk=document.getElementById('zTrack'), zKnob=document.getElementById('zKnob'),
+      zFill=document.getElementById('zFill');
+let zDrag=false;
+const s2p=s=>Math.log(s/MINS)/Math.log(MAXS/MINS);
+const p2s=p=>MINS*Math.pow(MAXS/MINS,p);
+function zPaint(p){ zKnob.style.bottom=(p*100)+'%'; zFill.style.height=(p*100)+'%'; }
+function syncSlider(){ if(zDrag) return; zPaint(Math.max(0,Math.min(1,s2p(S)))); }
+function zFrom(e){
+ const r=zTrk.getBoundingClientRect();
+ let p=1-(e.clientY-r.top)/r.height; p=Math.max(0,Math.min(1,p));
+ zPaint(p);
+ const b=box(); zoomAt(p2s(p), b.left+b.width/2, b.top+b.height/2, false);
+}
+zTrk.addEventListener('pointerdown',e=>{ zDrag=true; zTrk.setPointerCapture(e.pointerId);
+ sClick(.26); zFrom(e); e.stopPropagation(); });
+zTrk.addEventListener('pointermove',e=>{ if(zDrag){ zFrom(e); e.stopPropagation(); } });
+['pointerup','pointercancel'].forEach(n=>zTrk.addEventListener(n,()=>{ zDrag=false; }));
+zPaint(0);
 document.getElementById('zRe').onclick=()=>{sClick(.3);S=1;TX=0;TY=0;apply(true)};
 addEventListener('resize',()=>{apply(false);
  const bx=document.getElementById('ltbox');
@@ -1082,7 +1117,7 @@ apply(false);
 (function(){const e=document.getElementById('ltN'); if(e) e.textContent=cn(CNT.done);})();
 
 /* ══ 導演模式 ══ */
-const BUILD='2026-08-02 · r50';
+const BUILD='2026-08-02 · r54';
 console.log('%cWINZ VOYAGE  build '+BUILD,'color:#C8A24A;font-weight:700');
 const FILM = new URLSearchParams(location.search).has('film');   // 預設＝自己按節奏；?film=1＝全自動
 const SPD  = parseFloat(new URLSearchParams(location.search).get('speed')) || 1;
@@ -1240,15 +1275,18 @@ document.getElementById('bRe').onclick=()=>{
  document.querySelectorAll('.isle.sel').forEach(o=>o.classList.remove('sel'));
  document.getElementById('lsv').classList.remove('show');
  document.getElementById('veil').classList.remove('show');
- if(FILM){                                   // 導演模式：收起 UI，重演一次
-  document.body.classList.add(FILM?'film':'stepping');
-  ['bar','zc','mute'].forEach(id=>document.getElementById(id).classList.remove('on'));
- }
+ document.body.classList.add('film');        // 重播＝收起 UI、亮出「跳過」
+ ['bar','zc','mute'].forEach(id=>document.getElementById(id).classList.remove('on'));
  S=1;TX=0;TY=0;apply(true);
  setTimeout(run,140);
 };
 
-addEventListener('keydown',e=>{ if(e.key==='Escape'){
+addEventListener('keydown',e=>{
+ if(e.key==='Escape' && document.body.classList.contains('film')
+    && !document.getElementById('bar').classList.contains('on')){
+  sClick(.4); run._skip=true; return;
+ }
+ if(e.key==='Escape'){
  document.getElementById('lsv').classList.remove('show');
  document.getElementById('veil').classList.remove('show');}});
 

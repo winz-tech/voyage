@@ -241,9 +241,12 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   transition:opacity 1.5s ease}
 #dim.out{opacity:0;pointer-events:none}
+
 #dim .box{text-align:center;color:#D9BE86;opacity:0;transform:translateY(8px);
   transition:opacity 1.6s ease,transform 1.6s ease}
 #dim.on .box{opacity:1;transform:none}
+#dim.on.fading .box{opacity:0;transform:translateY(-8px);
+  transition:opacity 1.1s ease,transform 1.1s ease}
 #dim svg{width:min(4.4vw,7.4vh);height:min(4.4vw,7.4vh);margin-bottom:min(1.6vw,2.8vh);
   opacity:.85;animation:dimBr 3.2s ease-in-out infinite}
 @keyframes dimBr{0%,100%{opacity:.5}50%{opacity:.95}}
@@ -733,12 +736,50 @@ function sClick(v){ if(muted)return; initPool();
  try{const a=pool[pi=(pi+1)%pool.length];a.currentTime=0;a.volume=v||.55;
   const p=a.play(); if(p&&p.catch)p.catch(()=>{});}catch(e){} }
 const sTick=()=>sClick(.22);
+/* 心跳：lub-dub，隨著等待微微加速 */
+let hbTimer=null, hbNext=0, hbPeriod=1.16;
+function hbOnce(t0, g0){
+ try{ const a=ac();
+  const o=a.createOscillator(), g=a.createGain();
+  o.type='sine'; o.frequency.setValueAtTime(64,t0);
+  o.frequency.exponentialRampToValueAtTime(30,t0+.14);
+  g.gain.setValueAtTime(.0001,t0);
+  g.gain.exponentialRampToValueAtTime(g0,t0+.014);
+  g.gain.exponentialRampToValueAtTime(.0001,t0+.22);
+  o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0+.24);
+  // 一點肉感：低通短噪
+  const L=Math.floor(a.sampleRate*.09), b=a.createBuffer(1,L,a.sampleRate), d=b.getChannelData(0);
+  for(let i=0;i<L;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/L,3);
+  const s=a.createBufferSource(); s.buffer=b;
+  const f=a.createBiquadFilter(); f.type='lowpass'; f.frequency.value=170;
+  const ng=a.createGain(); ng.gain.setValueAtTime(g0*.5,t0);
+  ng.gain.exponentialRampToValueAtTime(.0001,t0+.10);
+  s.connect(f); f.connect(ng); ng.connect(a.destination); s.start(t0); s.stop(t0+.11);
+ }catch(e){}
+}
+function hbStart(){
+ if(hbTimer) return;
+ try{ const a=ac(); hbNext=a.currentTime+.06; hbPeriod=1.16;
+  hbTimer=setInterval(()=>{
+   if(muted) return;
+   const a2=ac();
+   while(hbNext < a2.currentTime+.6){
+    hbOnce(hbNext,.34); hbOnce(hbNext+.27,.19);
+    hbNext += hbPeriod;
+    hbPeriod = Math.max(.86, hbPeriod-.012);      // 越等越急
+   }
+  },220);
+ }catch(e){}
+}
+function hbStop(){ if(hbTimer){ clearInterval(hbTimer); hbTimer=null; } }
+
 const sCrack=()=>{nz(.18,2800,300,1.1,.3);tn(150,50,.34,.22)};
 const sRoll =()=>{nz(1.5,400,2600,.5,.11)};
 const sBrush=()=>{sClick(.34); nz(.09,1400,4400,.7,.05)};
 const sDone =()=>{tn(392,392,.5,.1,'triangle');setTimeout(()=>tn(587,587,.75,.09,'triangle'),150)};
 document.getElementById('mute').onclick=function(){
  muted=!muted; this.textContent=muted?'🔈':'🔊';
+ if(muted){ hbStop(); }
  if(muted) bgmTo(0,500); else if(bgmWant&&bgm){
   const p=bgm.play(); if(p&&p.catch)p.catch(()=>{}); bgmTo(BGM_VOL,900); }
 };
@@ -746,7 +787,7 @@ document.getElementById('mute').onclick=function(){
 /* ── 流程 ── */
 let played=false;
 function reveal(){
- initPool(); sClick(.5); bgmStart();
+ initPool(); sClick(.5); hbStop(); bgmStart();
  const sl=document.getElementById('seal');
  sl.classList.add('crack'); document.getElementById('cap').style.opacity='0'; sCrack();
  setTimeout(()=>{
@@ -1041,7 +1082,7 @@ apply(false);
 (function(){const e=document.getElementById('ltN'); if(e) e.textContent=cn(CNT.done);})();
 
 /* ══ 導演模式 ══ */
-const BUILD='2026-08-02 · r49';
+const BUILD='2026-08-02 · r50';
 console.log('%cWINZ VOYAGE  build '+BUILD,'color:#C8A24A;font-weight:700');
 const FILM = new URLSearchParams(location.search).has('film');   // 預設＝自己按節奏；?film=1＝全自動
 const SPD  = parseFloat(new URLSearchParams(location.search).get('speed')) || 1;
@@ -1095,10 +1136,11 @@ document.body.classList.add(FILM?'film':'stepping');
  const d=document.getElementById('dim'); if(!d) return;
  let gone=false;
  const go=()=>{ if(gone)return; gone=true;
-   initPool(); bgmStart();                       // 這一觸同時解鎖音訊、放起音樂
-   d.classList.add('out');
+   initPool(); hbStart();                        // 戴上耳機後：先只有心跳，沒有音樂
+   d.classList.add('fading');
+   setTimeout(()=>d.classList.add('out'), 2400);
    setTimeout(()=>{ d.style.display='none';
-     document.getElementById('seal').classList.add('beckon'); }, 1500); };
+     document.getElementById('seal').classList.add('beckon'); }, 3900); };
  setTimeout(()=>d.classList.add('on'), 500);
  if(AUTO) setTimeout(go, 5200);
  else setTimeout(()=>waitTap(go), 2600);

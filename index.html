@@ -93,6 +93,16 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
   will-change:transform;cursor:grab}
 #zoom.grabbing{cursor:grabbing}
 .isle .med{transition:fill-opacity .16s,stroke-width .16s}
+/* 在海上漂 */
+#ship .bob{animation:shipBob 4.2s ease-in-out infinite;transform-origin:center}
+@keyframes shipBob{
+  0%,100%{transform:translateY(0) rotate(-1.1deg)}
+  50%    {transform:translateY(-4px) rotate(1.3deg)}}
+#ship .wake{animation:wake 4.2s ease-in-out infinite}
+#ship .wake.w2{animation-delay:.5s}
+@keyframes wake{0%,100%{opacity:.18;transform:scaleX(.86)}50%{opacity:.6;transform:scaleX(1.12)}}
+#ship .lead{animation:leadPulse 2.6s ease-in-out infinite}
+@keyframes leadPulse{0%,100%{opacity:.35}50%{opacity:.85}}
 .isle:hover .med{fill-opacity:1;stroke-width:2.6}
 .isle.sel .med{stroke:#B01E17;stroke-width:3;fill-opacity:1}
 .isle.sel .num{fill:#B01E17}
@@ -236,13 +246,42 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
 /* 四周昏暗：舞台永遠帶一層暗角 */
 #stage::after{content:'';position:absolute;inset:0;z-index:45;pointer-events:none;
   background:radial-gradient(ellipse 78% 78% at 50% 50%,transparent 42%,rgba(6,4,2,.5) 92%)}
+#tapHint{position:fixed;z-index:60;left:50%;bottom:7%;transform:translateX(-50%);
+  display:none;flex-direction:column;align-items:center;gap:min(1vw,1.8vh);
+  pointer-events:none;text-align:center}
+#tapHint.on{display:flex;animation:thIn .8s ease}
+@keyframes thIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}}
+#tapHint .halo{position:relative;width:min(3vw,5vh);height:min(3vw,5vh);border-radius:50%;
+  background:radial-gradient(circle,rgba(255,226,164,.95),rgba(232,190,120,.35) 45%,transparent 70%);
+  animation:haloBr 2.2s ease-in-out infinite}
+#tapHint .halo::before,#tapHint .halo::after{content:'';position:absolute;inset:0;border-radius:50%;
+  border:1.5px solid rgba(255,222,158,.55);animation:haloRing 2.6s ease-out infinite}
+#tapHint .halo::after{animation-delay:1.3s}
+@keyframes haloBr{0%,100%{opacity:.55;transform:scale(.88)}50%{opacity:1;transform:scale(1.06)}}
+@keyframes haloRing{0%{transform:scale(.9);opacity:.8}100%{transform:scale(2.8);opacity:0}}
+#tapHint .txt{font-family:'MING','WK',serif;font-weight:700;font-size:min(1.05vw,2vh);
+  letter-spacing:.42em;text-indent:.42em;color:#F0DCAC;
+  text-shadow:0 0 14px rgba(255,214,140,.7),0 2px 6px rgba(0,0,0,.85);
+  animation:haloBr 2.2s ease-in-out infinite}
+#tapAuto{pointer-events:auto;cursor:pointer;font-family:'WK',serif;
+  font-size:min(.85vw,1.6vh);letter-spacing:.24em;color:#9C8354;
+  background:none;border:none;padding:6px 10px;opacity:.75}
+#tapAuto:hover{color:#E8D2A0}
+/* 信箋按鈕發光 */
+#ltbox .go.glow{animation:goGlow 2.2s ease-in-out infinite}
+@keyframes goGlow{0%,100%{box-shadow:0 2px 10px rgba(60,35,10,.3),0 0 0 0 rgba(255,214,140,.5)}
+  50%{box-shadow:0 2px 10px rgba(60,35,10,.3),0 0 26px 6px rgba(255,214,140,.55)}}
+/* 封蠟的光暈提示 */
+#seal.beckon::before{content:'';position:absolute;inset:-22%;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,214,140,.28),transparent 65%);
+  animation:haloBr 2.4s ease-in-out infinite;pointer-events:none}
 #fcap{position:fixed;z-index:39;left:50%;bottom:5.5%;transform:translateX(-50%) translateY(10px);
-  display:none;align-items:center;gap:14px;padding:11px 22px;max-width:86vw;
+  display:none;align-items:center;pointer-events:none;gap:14px;padding:11px 22px;max-width:86vw;
   background:linear-gradient(180deg,rgba(242,232,202,.96),rgba(224,209,170,.94));
   border:1.5px solid #5C3F1C;box-shadow:0 6px 22px rgba(0,0,0,.55),
   inset 0 0 0 3px rgba(242,232,202,.9),inset 0 0 0 4.5px rgba(122,100,64,.5);
   opacity:0;transition:opacity .45s ease,transform .45s ease}
-body.film #fcap{display:flex}
+#fcap.on{display:flex}
 #fcap.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #fcap .no{font-family:'CZ',serif;font-size:min(1.1vw,2vh);color:#6B4520;letter-spacing:.16em;flex:none}
 #fcap .nm{font-family:'MING','WK',serif;font-weight:700;font-size:min(1.55vw,2.9vh);
@@ -257,7 +296,7 @@ body.film #fcap{display:flex}
   font-family:'MING','WK',serif;font-size:12.5px;letter-spacing:.18em;
   background:rgba(240,229,198,.9);color:#3A2408;border:1.4px solid #5C3F1C;padding:7px 15px;
   box-shadow:0 3px 10px rgba(0,0,0,.45)}
-body.film #bSkip{display:block}
+body.film #bSkip,body.stepping #bSkip{display:block}
 body.film #bar,body.film #zc,body.film #mute,body.film #hint,body.film #info,body.film #rot{display:none!important}
 #fstart{position:fixed;inset:0;z-index:95;display:none;flex-direction:column;
   align-items:center;justify-content:center;gap:26px;background:#0B0703;cursor:pointer}
@@ -369,6 +408,11 @@ body.film #bar,body.film #zc,body.film #mute,body.film #hint,body.film #info,bod
     <div class="s">將四周調暗，音量放小　我們準備啟航</div>
   </div>
 </div>
+<div id="tapHint">
+  <div class="halo"></div>
+  <div class="txt">輕　觸　繼　續</div>
+  <button id="tapAuto">自動播放 ▸</button>
+</div>
 <div id="fcap"><span class="no" id="fcapNo"></span><span class="nm" id="fcapNm"></span><span class="st" id="fcapSt"></span></div>
 <button id="bSkip">跳過 ▸</button>
 
@@ -385,6 +429,7 @@ const MAP="assets/map.jpg";
 const LOGO="assets/logo.webp";
 const SHIP="assets/ship.webp";
 const SHIP_FLIP=false;
+const SHIPXY=[506,453];   // 停泊海面（離 04 號島最近的開闊水域）
 
 const LEGS=[
  {name:'接單前',latin:'LEG I',isles:[
@@ -463,6 +508,11 @@ let h=`<defs>
  <filter id="brush" x="-40%" y="-40%" width="180%" height="180%">
   <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="5" result="n"/>
   <feDisplacementMap in="SourceGraphic" in2="n" scale="4.4" xChannelSelector="R" yChannelSelector="G"/></filter>
+ <radialGradient id="seaGlow">
+  <stop offset="0" stop-color="#FFE9B8" stop-opacity=".38"/>
+  <stop offset="55%" stop-color="#FFD98A" stop-opacity=".16"/>
+  <stop offset="100%" stop-color="#FFD98A" stop-opacity="0"/>
+ </radialGradient>
  <filter id="sh" x="-40%" y="-40%" width="180%" height="180%">
   <feDropShadow dx="0" dy="1.5" stdDeviation="2" flood-color="#2A1B08" flood-opacity=".5"/></filter>
 </defs>
@@ -604,14 +654,25 @@ FLAT.forEach((it,i)=>{ if(it.st!=='doing')return; const [x,y]=POS[i];
    <animate attributeName="opacity" values=".65;0;.65" dur="2.6s" repeatCount="indefinite"/></circle></g>`;});
 
 /* 船 */
-h+=`<g id="ship" opacity="0" transform="translate(${POS[3][0]-70},${POS[3][1]-62})" filter="url(#sh)">
- <g transform="scale(${SHIP_FLIP?-1:1},1)">
-  <image href="${SHIP}" x="-40" y="-30" width="80" height="47" preserveAspectRatio="xMidYMid meet"/>
+h+=`<g id="ship" opacity="0" transform="translate(${SHIPXY[0]},${SHIPXY[1]})">
+ <path class="lead" d="M -6 -20 Q -20 -60 -40 -92" fill="none" stroke="#B01E17"
+   stroke-width="2" stroke-dasharray="7 6" opacity=".75"/>
+ <circle cx="0" cy="4" r="52" fill="url(#seaGlow)" opacity=".9"/>
+ <g class="bob">
+  <g filter="url(#sh)">
+   <g transform="scale(${SHIP_FLIP?-1:1},1)">
+    <image href="${SHIP}" x="-48" y="-40" width="96" height="56" preserveAspectRatio="xMidYMid meet"/>
+   </g>
+  </g>
+  <path class="wake" d="M -34 20 q 14 6 28 0" fill="none" stroke="#F0E4C4"
+    stroke-width="2.2" stroke-linecap="round" opacity=".55"/>
+  <path class="wake w2" d="M -22 27 q 11 5 22 0" fill="none" stroke="#F0E4C4"
+    stroke-width="1.8" stroke-linecap="round" opacity=".38"/>
  </g>
- <rect x="-46" y="-64" width="92" height="25" rx="3" fill="#EADCB8" fill-opacity=".94"
-   stroke="#B01E17" stroke-width="1.4"/>
- ${etx(0,-46,15,'#B01E17',3,'ming','現在位置')}
- <path d="M0 -39 L0 -30" stroke="#B01E17" stroke-width="1.6"/></g>`;
+ <rect x="-48" y="-72" width="96" height="26" rx="3" fill="#EADCB8" fill-opacity=".95"
+   stroke="#B01E17" stroke-width="1.5" filter="url(#sh)"/>
+ ${etx(0,-53,15.5,'#B01E17',3,'ming','現在位置')}
+</g>`;
 
 const svg=document.getElementById('mapSvg'); svg.innerHTML=h;
 
@@ -699,10 +760,20 @@ function reveal(){
    while(bx.scrollHeight>bx.clientHeight && f>10.5 && guard++<40){ f-=0.5; bx.style.fontSize=f+'px'; }
   })();
   const ls=[...document.querySelectorAll('#ltbox .ln')];
-  const GAP = FILM ? 1600*SPD : 1500;
-  ls.forEach((p,i)=>setTimeout(()=>{ p.classList.add('in'); if(i<ls.length-1) sTick(); },
-    i===ls.length-1 ? (FILM?700:1300)+i*GAP : i*GAP));
-  if(FILM) setTimeout(openChart, (ls.length-1)*GAP + 3600*SPD);
+  const btn = ls[ls.length-1], paras = ls.slice(0,-1);
+  if(AUTO){
+   const GAP = 1600*SPD;
+   paras.forEach((p,i)=>setTimeout(()=>{ p.classList.add('in'); sTick(); }, i*GAP));
+   setTimeout(()=>btn.classList.add('in'), paras.length*GAP + 700);
+   setTimeout(openChart, paras.length*GAP + 3600*SPD);
+  } else {
+   let i=0;
+   (function step(){
+    paras[i].classList.add('in'); sTick(); i++;
+    if(i<paras.length) waitTap(step);
+    else waitTap(()=>{ btn.classList.add('in','glow'); }, 400);
+   })();
+  }
  },1500);
  document.getElementById('ltGo').onclick=openChart;
  document.getElementById('letter').onclick=e=>{
@@ -764,16 +835,16 @@ function run(){
 
  const CAM=2.15, PRE=FILM?2800:0;
  /* 一站一停：每座島 = 航行 TRAVEL 毫秒 → 停靠 HOLD 毫秒（停的時候打勾／升旗）*/
- const TRAVEL = (FILM?420:110)*SPD, HOLD = (FILM?1050:90)*SPD;
+ const TRAVEL = (AUTO?420:520)*SPD, HOLD = (AUTO?1050:60)*SPD;
  const STEP = TRAVEL+HOLD, DUR = POS.length*STEP;
- const t0 = performance.now()+PRE;
+ let t0 = performance.now()+PRE;
  if(FILM){ S=1;TX=0;TY=0;apply(false); }
- let nextI=0, nextLeg=0; run._skip=false;
+ let nextI=0, nextLeg=0, paused=false, lastNow=0; run._skip=false;
 
  const cap=document.getElementById('fcap');
  function landfall(i){
   const g=isles[i], it=FLAT[i];
-  if(FILM){
+  {
    document.getElementById('fcapNo').textContent='No.'+String(i+1).padStart(2,'0');
    document.getElementById('fcapNm').textContent=it.nm;
    const s=document.getElementById('fcapSt'); s.className='st '+it.st; s.textContent=LABEL[it.st];
@@ -799,7 +870,9 @@ function run(){
    camAt(POS[0][0],POS[0][1],1+(CAM-1)*ee,1);
    requestAnimationFrame(tick); return;
   }
-  if(run._skip){ while(nextI<AT.length) landfall(nextI++);
+  if(paused){ t0 += (now-lastNow); lastNow=now; requestAnimationFrame(tick); return; }
+  lastNow = now;
+  if(run._skip){ paused=false; while(nextI<AT.length) landfall(nextI++);
    labs.forEach(g=>g.setAttribute('opacity','1'));
    rt.style.strokeDashoffset=0; finish(true); return; }
   const el = Math.max(0, now-t0);                        // rAF 時間戳可能早於 t0，要夾住
@@ -822,7 +895,13 @@ function run(){
    nextLeg++;
   }
   while(nextI<idx) landfall(nextI++);
-  if(k>=1 && nextI===idx) landfall(nextI++);
+  if(k>=1 && nextI===idx){
+   landfall(nextI++);
+   if(!AUTO && nextI<AT.length){                 // 自主模式：停在島上，等使用者
+    paused=true; lastNow=now;
+    waitTap(()=>{ paused=false; });
+   }
+  }
 
   if(el<DUR) requestAnimationFrame(tick);
   else { while(nextI<AT.length) landfall(nextI++); finish(); }
@@ -838,16 +917,16 @@ function run(){
   setTimeout(()=>{
    const s=document.getElementById('ship');
    s.style.transition='none';
-   s.setAttribute('transform',`translate(${POS[3][0]-46},${POS[3][1]-96})`);
+   s.setAttribute('transform',`translate(${SHIPXY[0]},${SHIPXY[1]-34})`);
    void svg.getBoundingClientRect();
    s.style.transition='opacity .6s, transform .9s cubic-bezier(.3,1.3,.5,1)';
    s.setAttribute('opacity','1');
-   s.setAttribute('transform',`translate(${POS[3][0]-46},${POS[3][1]-66})`);
+   s.setAttribute('transform',`translate(${SHIPXY[0]},${SHIPXY[1]})`);
   },500);
 
   /* 交還操控權：關掉影片外衣、亮出所有按鈕 */
   function handOver(){
-   document.body.classList.remove('film');
+   document.body.classList.remove('film','stepping');
    document.getElementById('bar').classList.add('on');
    document.getElementById('mute').classList.add('on');
    document.getElementById('zc').classList.add('on');
@@ -954,8 +1033,28 @@ apply(false);
 (function(){const e=document.getElementById('ltN'); if(e) e.textContent=cn(CNT.done);})();
 
 /* ══ 導演模式 ══ */
-const FILM = !new URLSearchParams(location.search).has('nofilm');
+const FILM = new URLSearchParams(location.search).has('film');   // 預設＝自己按節奏；?film=1＝全自動
 const SPD  = parseFloat(new URLSearchParams(location.search).get('speed')) || 1;
+let AUTO = FILM;                       // 導演模式＝全自動；預設＝自己按節奏
+
+/* 等使用者輕觸；AUTO 時自動續播。用一團光指路 */
+function waitTap(cb, delay){
+ if(AUTO){ setTimeout(cb, delay||700); return; }
+ const h=document.getElementById('tapHint');
+ let done=false;
+ const fire=()=>{ if(done)return; done=true;
+   document.removeEventListener('click',onClick,true);
+   document.removeEventListener('keydown',onKey,true);
+   h.classList.remove('on'); sClick(.34); cb(); };
+ const onClick=e=>{
+   if(e.target&&e.target.closest&&e.target.closest('#tapAuto')){ AUTO=true; }
+   fire();
+ };
+ const onKey=e=>{ if(e.key===' '||e.key==='Enter'||e.key==='ArrowRight'){ e.preventDefault(); fire(); } };
+ setTimeout(()=>{ if(done)return; h.classList.add('on');
+   document.addEventListener('click',onClick,true);
+   document.addEventListener('keydown',onKey,true); }, 420);
+}
 /* 把地圖座標 (mx,my) 擺到畫面中央，縮放 s；lerp<1 為平滑跟隨 */
 function camAt(mx,my,s,lerp){
  const b=box(), vb=svg.viewBox.baseVal;
@@ -979,16 +1078,20 @@ function camMove(mx,my,s,ms,done){
   if(u<1) requestAnimationFrame(f); else if(done) done();
  })(t0);
 }
-if(FILM) document.body.classList.add('film');
+document.body.classList.add(FILM?'film':'stepping');
 
 /* 開場：昏暗＋耳機提示 */
 (function(){
  const d=document.getElementById('dim'); if(!d) return;
  let gone=false;
- const go=()=>{ if(gone)return; gone=true; d.classList.add('out');
-   setTimeout(()=>{ d.style.display='none'; }, 1600); };
+ const go=()=>{ if(gone)return; gone=true;
+   initPool(); bgmStart();                       // 這一觸同時解鎖音訊、放起音樂
+   d.classList.add('out');
+   setTimeout(()=>{ d.style.display='none';
+     document.getElementById('seal').classList.add('beckon'); }, 1500); };
  setTimeout(()=>d.classList.add('on'), 500);
- setTimeout(go, 5200);
+ if(AUTO) setTimeout(go, 5200);
+ else setTimeout(()=>waitTap(go), 2600);
  d.addEventListener('click', go);
 })();   // 一樣從封蠟開始，只是自動演完
 
@@ -1085,7 +1188,7 @@ document.getElementById('bRe').onclick=()=>{
  document.getElementById('lsv').classList.remove('show');
  document.getElementById('veil').classList.remove('show');
  if(FILM){                                   // 導演模式：收起 UI，重演一次
-  document.body.classList.add('film');
+  document.body.classList.add(FILM?'film':'stepping');
   ['bar','zc','mute'].forEach(id=>document.getElementById(id).classList.remove('on'));
  }
  S=1;TX=0;TY=0;apply(true);

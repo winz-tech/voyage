@@ -192,6 +192,8 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
 #lshd{display:flex;align-items:center;gap:14px;padding:18px 22px 14px;
   border-bottom:1px solid rgba(122,100,64,.3)}
 #lshd .eb{font-family:'CZ',serif;font-size:10px;letter-spacing:.3em;color:#8A5A2E}
+#lsver{font-family:'CZ',serif;font-size:9.5px;letter-spacing:.14em;color:#9C8354;
+  text-align:right;padding:0 22px 10px}
 #lshd h2{font-family:'WK',serif;font-size:22px;letter-spacing:.22em;color:#3B2710;margin-top:3px}
 .phlogo{width:54px;flex:none}
 .lsx{margin-left:auto;background:none;border:1.2px solid var(--ink-l);color:var(--ink);
@@ -246,7 +248,7 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
 /* 四周昏暗：舞台永遠帶一層暗角 */
 #stage::after{content:'';position:absolute;inset:0;z-index:45;pointer-events:none;
   background:radial-gradient(ellipse 78% 78% at 50% 50%,transparent 42%,rgba(6,4,2,.5) 92%)}
-#tapHint{position:fixed;z-index:98;left:50%;bottom:7%;transform:translateX(-50%);
+#tapHint{position:fixed;z-index:98;left:50%;bottom:8.5%;transform:translateX(-50%);
   display:none;flex-direction:column;align-items:center;gap:min(1vw,1.8vh);
   pointer-events:none;text-align:center}
 #tapHint.on{display:flex;animation:thIn .8s ease}
@@ -259,14 +261,10 @@ body{font-family:'WK',sans-serif;color:var(--ink);-webkit-font-smoothing:antiali
 #tapHint .halo::after{animation-delay:1.3s}
 @keyframes haloBr{0%,100%{opacity:.55;transform:scale(.88)}50%{opacity:1;transform:scale(1.06)}}
 @keyframes haloRing{0%{transform:scale(.9);opacity:.8}100%{transform:scale(2.8);opacity:0}}
-#tapHint .txt{font-family:'MING','WK',serif;font-weight:700;font-size:min(1.05vw,2vh);
+#tapHint .txt{font-family:'MING','WK',serif;font-weight:700;font-size:min(1.2vw,2.3vh);
   letter-spacing:.42em;text-indent:.42em;color:#F0DCAC;
   text-shadow:0 0 14px rgba(255,214,140,.7),0 2px 6px rgba(0,0,0,.85);
   animation:haloBr 2.2s ease-in-out infinite}
-#tapAuto{pointer-events:auto;cursor:pointer;font-family:'WK',serif;
-  font-size:min(.85vw,1.6vh);letter-spacing:.24em;color:#9C8354;
-  background:none;border:none;padding:6px 10px;opacity:.75}
-#tapAuto:hover{color:#E8D2A0}
 /* 信箋按鈕發光 */
 #ltbox .go.glow{animation:goGlow 2.2s ease-in-out infinite}
 @keyframes goGlow{0%,100%{box-shadow:0 2px 10px rgba(60,35,10,.3),0 0 0 0 rgba(255,214,140,.5)}
@@ -364,6 +362,7 @@ body.film #bar,body.film #zc,body.film #mute,body.film #hint,body.film #info,bod
   </div>
   <div id="lsgauge"></div>
   <div id="lsbody"></div>
+  <div id="lsver"></div>
 </div></div>
 
 <div id="veil"><div id="vbox">
@@ -411,7 +410,6 @@ body.film #bar,body.film #zc,body.film #mute,body.film #hint,body.film #info,bod
 <div id="tapHint">
   <div class="halo"></div>
   <div class="txt">輕　觸　繼　續</div>
-  <button id="tapAuto">自動播放 ▸</button>
 </div>
 <div id="fcap"><span class="no" id="fcapNo"></span><span class="nm" id="fcapNm"></span><span class="st" id="fcapSt"></span></div>
 <button id="bSkip">跳過 ▸</button>
@@ -783,6 +781,9 @@ function reveal(){
 function openChart(){
  if(openChart._d) return; openChart._d=true;
  sClick(.6);
+ AUTO = true;                                   // 從這裡開始由鏡頭帶領
+ document.body.classList.remove('stepping');
+ document.body.classList.add('film');
  document.getElementById('letter').classList.add('out');
  setTimeout(()=>{
   document.getElementById('opening').classList.add('out');
@@ -833,7 +834,7 @@ function run(){
  ms.style.transition='opacity .8s';ms.setAttribute('opacity','1');
  sailer.style.transition='opacity .5s';sailer.setAttribute('opacity','1');
 
- const CAM=2.15, PRE=FILM?2800:0;
+ const CAM=2.15, PRE=AUTO?2800:0;
  /* 一站一停：每座島 = 航行 TRAVEL 毫秒 → 停靠 HOLD 毫秒（停的時候打勾／升旗）*/
  const TRAVEL = (AUTO?420:520)*SPD, HOLD = (AUTO?1050:60)*SPD;
  const STEP = TRAVEL+HOLD, DUR = POS.length*STEP;
@@ -888,7 +889,7 @@ function run(){
   const p=rt.getPointAtLength(L*e), q=rt.getPointAtLength(Math.min(L,L*e+6));
   const a=Math.atan2(q.y-p.y,q.x-p.x)*180/Math.PI;
   sailer.setAttribute('transform',`translate(${p.x},${p.y}) rotate(${a*.35})`);
-  if(FILM) camAt(p.x,p.y, CAM + (k>=1?0.22:0), .085);
+  if(AUTO) camAt(p.x,p.y, CAM + (k>=1?0.22:0), .085);
 
   while(nextLeg<LEGAT.length && e>=LEGAT[nextLeg]-.005){
    const g=labs[nextLeg]; if(g){g.style.transition='opacity .7s';g.setAttribute('opacity','1');}
@@ -940,7 +941,7 @@ function run(){
    setTimeout(()=>fade(document.getElementById('lgd')),200);
   },900);
 
-  if(FILM && !skipped){
+  if(AUTO && !skipped){
    setTimeout(()=>camMove(836,470,1,2600,()=>{             // ① 拉遠回全圖
     setTimeout(()=>camMove(1505,716,2.5,2600,()=>{         // ② 推向「26 / 45」
      setTimeout(()=>camMove(836,470,1,2400,()=>{           // ③ 再拉回主畫面
@@ -1033,6 +1034,8 @@ apply(false);
 (function(){const e=document.getElementById('ltN'); if(e) e.textContent=cn(CNT.done);})();
 
 /* ══ 導演模式 ══ */
+const BUILD='2026-08-02 · r46';
+console.log('%cWINZ VOYAGE  build '+BUILD,'color:#C8A24A;font-weight:700');
 const FILM = new URLSearchParams(location.search).has('film');   // 預設＝自己按節奏；?film=1＝全自動
 const SPD  = parseFloat(new URLSearchParams(location.search).get('speed')) || 1;
 let AUTO = FILM;                       // 導演模式＝全自動；預設＝自己按節奏
@@ -1047,7 +1050,6 @@ function waitTap(cb, delay){
    document.removeEventListener('keydown',onKey,true);
    h.classList.remove('on'); sClick(.34); cb(); };
  const onClick=e=>{
-   if(e.target&&e.target.closest&&e.target.closest('#tapAuto')){ AUTO=true; }
    e.preventDefault(); e.stopPropagation();     // 這一觸只用來前進，不觸發別的東西
    fire();
  };
@@ -1173,6 +1175,7 @@ function flyTo(i){
 }
 
 document.getElementById('bSkip').onclick=()=>{ sClick(.5); run._skip=true; };
+(function(){const e=document.getElementById('lsver'); if(e) e.textContent='BUILD '+BUILD;})();
 document.getElementById('bLs').onclick=()=>{sClick(.5);document.getElementById('lsv').classList.add('show')};
 document.getElementById('lsv').onclick=e=>{if(e.target.id==='lsv')e.currentTarget.classList.remove('show')};
 
